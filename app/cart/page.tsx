@@ -81,7 +81,8 @@ export default function Cart() {
       try {
         const result = await fetch('/api/paycart');
         const data = await result.json();
-        if (!result.ok) return Report.failure("เกิดข้อผิดพลาด", data.message || "ลบไม่สำเร็จ", "ตกลง");
+        if (!result.ok) return Report.failure("เกิดข้อผิดพลาด", data.message, "ตกลง");
+        window.dispatchEvent(new Event("login-success"));
         setStep(2)
       } catch (error) {
         console.error("Error cancel pay cart:", error);

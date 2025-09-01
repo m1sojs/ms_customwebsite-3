@@ -11,6 +11,7 @@ import rehypeRaw from "rehype-raw";
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { useParams } from "next/navigation";
+import { msConfirm } from "@/components/msConfirm";
 
 interface ProductInterface {
   id: number;
@@ -98,6 +99,46 @@ export default function Product() {
     );
   }
 
+  const handlePaynow = async () => {
+    msConfirm.show({
+      bgColor: "bg-white/4 backdrop-blur-md",
+      text: `ราคาสินค้าทั้งหมดคือ ${productData[0]?.price}฿ ต้องการชำระเงินเลยหรือไม่`,
+      image: "/question-sign.png",
+      secondaryButtonStyle: "bg-white text-black font-prompt",
+      secondaryButtonText: "กลับ",
+      primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
+      primaryButtonText: "ชำระเงิน"
+    }).onNext(async () => {
+      Loading.pulse("Checking Out . . .");
+      try {
+        const res = await fetch('/api/paynow', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: productData[0]?.name,
+            monthly: monthly
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
+        window.dispatchEvent(new Event("login-success"));
+        Report.success(
+          "เสร็จสิ้น",
+          "ซื้อสินค้าเรียบร้อยแล้วสามารถดูสินค้าได้ที่ โปรไฟล์",
+          "ย้อนกลับ"
+        );
+      } catch (error) {
+        console.error("Error cancel pay cart:", error);
+      } finally {
+        setTimeout(() => Loading.remove(), 1000);
+      }
+    })
+  }
+
   return (
     <div data-aos="fade-up" className="grid grid-rows-[20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-5 sm:p-20 font-[family-name:var(--font-prompt)]">
       <div className="flex flex-col sm:flex-row text-center mt-40">
@@ -137,7 +178,7 @@ export default function Product() {
                 type="radio"
                 name="productType"
                 value="monthly"
-                onClick={()=>setMonthly(true)}
+                onClick={() => setMonthly(true)}
                 className="appearance-none w-4 h-4 rounded-full border border-white checked:bg-[#ff6161] checked:border-white transition duration-200"
               />
               รายเดือน
@@ -147,7 +188,7 @@ export default function Product() {
                 type="radio"
                 name="productType"
                 value="lifetime"
-                onClick={()=>setMonthly(false)}
+                onClick={() => setMonthly(false)}
                 className="appearance-none w-4 h-4 rounded-full border border-white checked:bg-[#ff6161] checked:border-white transition duration-200"
               />
               ถาวร
@@ -163,7 +204,7 @@ export default function Product() {
             <div onClick={handleAddToCart} className="flex items-center justify-center w-fit text-white bg-white/4 hover:bg-[#cd0101]/60 border border-white/3 backdrop-blur-md overflow-hidden p-2 px-4 gap-2 rounded-md font-prompt duration-300 cursor-pointer">
               ใส่ตะกร้า
             </div>
-            <div className="flex items-center justify-center w-fit text-white bg-gradient-to-r from-[#ff6161] to-[#cd0101] backdrop-blur-md overflow-hidden p-2 px-4 gap-2 rounded-md font-prompt duration-300 cursor-pointer">
+            <div onClick={handlePaynow} className="flex items-center justify-center w-fit text-white bg-gradient-to-r from-[#ff6161] to-[#cd0101] backdrop-blur-md overflow-hidden p-2 px-4 gap-2 rounded-md font-prompt duration-300 cursor-pointer">
               ซื้อเลย
             </div>
           </div>
