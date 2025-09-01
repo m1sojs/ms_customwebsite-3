@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id        Int       @id @default(autoincrement())
+  discordId String    @unique
+  username  String    @unique
+  email     String    @unique
+  point     Int       @default(0)
+  cart      Json
+  history   history[]
+  createdAt DateTime  @default(now())
+}
+
+model products {
+  id           Int     @id @default(autoincrement())
+  name         String  @unique
+  label        String  @unique
+  price        Int
+  image        String
+  video        String
+  category     String  @default("")
+  description  String  @db.LongText
+  downloadLink String  @default("")
+  buyedCount   Int     @default(0)
+  stock        Int     @default(0)
+  isNew        Boolean @default(false)
+}
+
+model discountCode {
+  id          Int    @id @default(autoincrement())
+  code        String @unique
+  minDiscount Int
+  maxDiscount Int
+  percent     Int    @default(0)
+}
+
+model history {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  ip        String    @default("127.0.0.1")
+  discount  String?
+  user      users     @relation(fields: [userId], references: [id])
+  userId    Int
+  expire    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model category {
+  id    Int    @id @default(autoincrement())
+  label String
+  name  String @default("")
+  image String
+}
+
+model webConfig {
+  id        Int  @id @default(autoincrement())
+  webconfig Json
+}
+
+model AdminLog {
+  id        Int      @id @default(autoincrement())
+  reason    String
+  email     String
+  ipaddress String
+  timestamp DateTime @default(now())
+}
