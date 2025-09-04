@@ -15,7 +15,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Span } from "next/dist/trace";
 
 
 interface HistoryInterface {

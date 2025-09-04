@@ -14,8 +14,7 @@ interface ProductInterface {
   isNew: number;
 }
 
-
-export default function productsPreview() {
+export default function ProductsPreview() {
     const [products, setProducts] = useState<ProductInterface[]>([]);
     
     useEffect(() => {

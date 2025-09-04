@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'กรุณาล็อคอิน' }, { status: 404 });
         }
 
-        let code = voucher.replace(
+        const code = voucher.replace(
             "https://gift.truemoney.com/campaign/?v=",
             ""
         );
