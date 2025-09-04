@@ -20,7 +20,7 @@ interface ProductInterface {
 
 export default function Category() {
   const { category } = useParams() as { category: string };
-  const [products, setProducts] = useState<ProductInterface[]>([])
+  const [products, setProducts] = useState<ProductInterface[]>([]);
 
   useEffect(() => {
     Loading.init({

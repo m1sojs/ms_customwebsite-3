@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import crypto from "crypto";
 
 type CartItem = {
     name: string;
     monthly: boolean;
 };
+
+function generateKey(length = 16): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const bytes = crypto.randomBytes(length);
+  let result = "";
+
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length];
+  }
+
+  return "Cgxlion_"+result;
+}
 
 function isCartItemArray(value: unknown): value is CartItem[] {
     return Array.isArray(value) && value.every(item =>
@@ -49,6 +62,27 @@ export async function GET(request: NextRequest) {
             select: { name: true, price: true, id: true },
         });
 
+        const histories = await prisma.history.findMany({
+            where: {
+                userId: user.id,
+                name: { in: productNames },
+                OR: [
+                    { expire: null },
+                    { expire: { gt: new Date() } }
+                ]
+            },
+            select: { name: true }
+        });
+
+        const boughtNames = new Set(histories.map(h => h.name));
+
+        const duplicateItems = cart.filter(item => boughtNames.has(item.name));
+        if (duplicateItems.length > 0) {
+            return NextResponse.json({
+                message: `คุณได้ซื้อสินค้าไปแล้ว: ${duplicateItems.map(i => i.name).join(', ')}`
+            }, { status: 400 });
+        }
+
         const totalPrice = products.reduce((sum, item) => sum + item.price, 0);
 
         if (user.point < totalPrice) {
@@ -66,7 +100,8 @@ export async function GET(request: NextRequest) {
                     name: item.name,
                     discount: null,
                     userId: user.id,
-                    expire: item.monthly == true
+                    tokenKey: generateKey(),
+                    expire: item.monthly
                         ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                         : null,
                 }))

@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import crypto from "crypto";
+
+function generateKey(length = 16): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const bytes = crypto.randomBytes(length);
+  let result = "";
+
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length];
+  }
+
+  return "Cgxlion_"+result;
+}
 
 export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
@@ -22,10 +35,26 @@ export async function POST(request: NextRequest) {
         if (!user) {
             return NextResponse.json({ message: 'ไม่พบผู้ใช้' }, { status: 404 });
         }
+
         const product = await prisma.products.findMany({
             where: { name: name },
             select: { name: true, price: true, id: true },
         });
+
+        const alreadyBought = await prisma.history.findFirst({
+            where: {
+                userId: user.id,
+                name: name,
+                OR: [
+                    { expire: null },
+                    { expire: { gt: new Date() } }
+                ]
+            }
+        });
+
+        if (alreadyBought) {
+            return NextResponse.json({ message: 'คุณได้ซื้อสินค้านี้ไปแล้ว ไม่สามารถซื้อซ้ำได้' }, { status: 400 });
+        }
 
         if (user.point < product[0].price) {
             return NextResponse.json({ message: 'Point ของท่านคงเหลือไม่เพียงพอ' }, { status: 400 });
@@ -42,6 +71,7 @@ export async function POST(request: NextRequest) {
                     name: product[0].name,
                     discount: null,
                     userId: user.id,
+                    tokenKey: generateKey(),
                     expire: monthly == true
                         ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                         : null,

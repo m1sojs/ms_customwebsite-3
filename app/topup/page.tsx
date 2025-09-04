@@ -2,21 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import { Loading } from 'notiflix/build/notiflix-loading-aio';
+import { Report } from 'notiflix/build/notiflix-report-aio';
 import Image from "next/image";
 import 'aos/dist/aos.css';
 import AOS from 'aos';
 import websiteConfig from "@/lib/websiteConfig";
 
 export default function Topup() {
-  const [page, setPage] = useState("promptpay")
+  const [page, setPage] = useState("promptpay");
   const [qrImage, setQrImage] = useState<string | null>(null);
   const [isGenerated, setIsGenerated] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [voucher, setVoucher] = useState("");
 
   useEffect(() => {
     Loading.init({
       svgColor: websiteConfig.themeColor,
     });
+
+    Report.init({
+      fontFamily: "Prompt"
+    })
 
     AOS.init({
       duration: 1000,
@@ -113,8 +119,25 @@ export default function Topup() {
     }
   };
 
+  const handleVoucherTopup = async () => {
+    const res = await fetch("/api/vouchertopup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        voucher: voucher,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
+
+    Report.success("เสร็จสิ้น", `เติมเงินยอด ${data.amount}  พ้อย เรียบร้อยแล้ว!!`, "ย้อนกลับ");
+  }
+
   return (
-    <div data-aos="fade-up" className="flex flex-col items-center min-h-screen p-8 pb-20 sm:p-15 font-[family-name:var(--font-prompt)]">
+    <div data-aos="fade-up" className="flex flex-col items-center min-h-screen p-8 pb-20 sm:p-15 duration-300 font-[family-name:var(--font-prompt)]">
       <div className="flex items-center m-auto">
         <div className="flex flex-col items-center w-[400px] h-auto text-white bg-white/1 border border-white/3 backdrop-blur-md p-4 rounded-xl duration-150">
           <span className="mt-2 font-prompt">เติมเงิน</span>
@@ -123,7 +146,7 @@ export default function Topup() {
             <span onClick={() => setPage("twvoucher")} className="bg-white/4 rounded-t-xl backdrop-blur-md p-2 px-4 hover:bg-red-600/60 duration-300 cursor-pointer">ซองของขวัญ</span>
           </div>
           {page === "promptpay" ? (
-            <div className="flex flex-col items-center w-full min-h-[120px] p-4 gap-2 bg-white/4 rounded-xl backdrop-blur-md overflow-hidden">
+            <div className="flex flex-col items-center w-full min-h-[120px] p-4 gap-2 bg-white/4 rounded-xl backdrop-blur-md overflow-hidden duration-300">
               <div className="mt-2">
                 {qrImage ? (
                   <div className="relative w-[256px] h-[256px]">
@@ -150,12 +173,12 @@ export default function Topup() {
           ) : (
             <div className="flex flex-col items-center w-full min-h-[120px] p-4 gap-2 bg-white/4 rounded-xl backdrop-blur-md overflow-hidden">
               <div className="mt-2">
-                <div className="relative w-[400px] h-[210px]">
+                <div className="relative w-[400px] h-[256px]">
                   <Image src="/topupvoucher.png" alt="#" fill className="rounded-xl object-contain" />
                 </div>
               </div>
-              <input type="number" name="amount" id="amount" placeholder="กรอกลิ้งซองของขวัญ" className="bg-white/1 border border-white/4 hover:bg-[#cd0101]/60 outline-none text-sm font-prompt duration-150 w-full p-2 px-5 mt-1 rounded-xl" />
-              <div className="bg-white/4 hover:bg-[#cd0101]/60 hover:cursor-pointer text-sm text-center duration-150 w-full p-2 rounded-xl font-prompt" >เติมเงิน</div>
+              <input type="text" name="amount" id="amount" onChange={e => { setVoucher(e.target.value) }} placeholder="กรอกลิ้งซองของขวัญ" className="bg-white/1 border border-white/4 hover:bg-[#cd0101]/60 outline-none text-sm font-prompt duration-150 w-full p-2 px-5 mt-1 rounded-xl" />
+              <div onClick={() => { handleVoucherTopup() }} className="bg-white/4 hover:bg-[#cd0101]/60 hover:cursor-pointer text-sm text-center duration-150 w-full p-2 rounded-xl font-prompt" >เติมเงิน</div>
             </div>
           )}
         </div>

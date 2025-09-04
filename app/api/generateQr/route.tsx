@@ -1,6 +1,7 @@
 import generatePayload from "promptpay-qr";
 import { toDataURL } from "qrcode";
 import { NextRequest, NextResponse } from "next/server";
+import { loadConfigFromAPI } from "@/lib/websiteConfig";
 
 function getRandomAmountString(amount: number): string {
   const randomTwoDigit = Math.floor(Math.random() * 90) + 10;
@@ -9,7 +10,8 @@ function getRandomAmountString(amount: number): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const promptPayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID!;
+    const config = await loadConfigFromAPI();
+    const promptPayId = config.promptPayID;
     const body = await request.json();
     const { amount } = body;
 

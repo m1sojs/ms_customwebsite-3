@@ -1,43 +1,77 @@
+"use client"
 import Image from "next/image";
 import 'aos/dist/aos.css';
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+interface ProductInterface {
+  id: number;
+  label: string;
+  name: string;
+  image: string;
+  category: string;
+  price: number;
+  isNew: number;
+}
+
 
 export default function productsPreview() {
+    const [products, setProducts] = useState<ProductInterface[]>([]);
+    
+    useEffect(() => {
+        const getProducts = async () => {
+            try {
+                const result = await fetch('/api/getproducts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                if (!result.ok) return;
+                const data = await result.json();
+
+                console.log(data)
+
+                setProducts(data.products);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+
+        getProducts();
+    }, []);
+
     return (
         <div data-aos="fade-up" className="flex mt-20 gap-5">
             <div data-aos="fade-left" data-aos-delay="100" className="hidden xl:flex w-[400px] h-auto !opacity-60 text-white bg-[#32323266] p-4 gap-2 rounded-xl duration-150">
-                <Image src="/product.png" width={150} height={150} alt="productImage" className="object-cover rounded-xl" />
-                <div className="flex flex-col justify-between h-full leading-tight">
+                <Image src={products[1]?.image ? products[1].image : "/product.png"} width={150} height={150} alt="productImage" className="object-cover rounded-xl" />
+                <div className="flex flex-col w-full h-full leading-tight">
                     <div>
-                        <div className="text-gray-400 text-sm font-prompt">สินค้า</div>
-                        <span className="text-white">MS Product 1</span>
-                        <div className="text-gray-400 text-xs">memorious product description</div>
+                        <div className="text-gray-400 text-sm font-prompt">{products[1]?.category || "Demo"}</div>
+                        <span className="text-white">{products[1]?.label || "Demo Script 2"}</span>
+                        <div className="text-gray-400 text-xs">Top 2 of cgxlion product</div>
                     </div>
 
-                    <div className="flex items-center justify-between w-full">
-                        <span className="flex gap-2 text-gray-400 font-prompt mt-4">100 Points</span>
-
-                        <div className="flex items-center w-fit ml-6 text-white bg-[#32323266] px-4 py-2 gap-2 rounded-xl duration-150 mt-4">
-                            <Image src="/bucket.png" width={20} height={20} alt="viewProduct" />
-                            <span className="text-sm">More</span>
-                        </div>
+                    <div className="flex items-center mt-auto">
+                        <span className="text-gray-200 font-prompt">{products[1]?.price.toLocaleString() || 0} Points</span>
                     </div>
                 </div>
             </div>
 
-            <div data-aos="fade-left" data-aos-delay="200" className="flex sm:w-[400px] w-[300px] h-auto scale-105 text-white bg-[#32323266] p-4 gap-2 rounded-xl duration-150 shadow-xl">
-                <Image src="/product.png" width={150} height={150} alt="productImage" className="object-cover rounded-xl" />
-                <div className="flex flex-col justify-between h-full leading-tight">
+            <div data-aos="fade-left" data-aos-delay="200" className="flex sm:w-[400px] w-[300px] h-auto scale-105 text-white bg-[#32323266] p-2 gap-2 rounded-xl duration-150 shadow-xl">
+                <Image src={products[0]?.image ? products[0].image : "/product.png"} width={150} height={150} alt="productImage" className="object-cover rounded-xl" />
+                <div className="flex flex-col w-full h-full leading-tight">
                     <div>
-                        <div className="text-gray-400 text-sm font-prompt">สินค้า</div>
-                        <span className="text-white">MS Product 1</span>
-                        <div className="text-gray-400 text-xs">memorious product description</div>
+                        <div className="text-gray-400 text-sm font-prompt">{products[0]?.category}</div>
+                        <span className="text-white">{products[0]?.label}</span>
+                        <div className="text-gray-400 text-xs">Top 1 of cgxlion product</div>
                     </div>
 
-                    <div className="w-full flex items-center mt-4">
-                        <span className="text-gray-200 font-prompt">100 Points</span>
+                    <div className="flex items-center mt-auto">
+                        <span className="text-gray-200 font-prompt">{products[0]?.price.toLocaleString()} Points</span>
 
-                        <Link href="/store" className="flex items-center ml-auto text-white bg-[#32323266] hover:bg-[#cd0101]/60 hover:cursor-pointer px-4 py-2 gap-2 rounded-xl duration-150">
+                        <Link href={`/store/${products[0]?.category}/${products[0]?.name}`} className="flex items-center ml-auto text-white bg-[#32323266] hover:bg-[#cd0101]/60 hover:cursor-pointer px-4 py-2 gap-2 rounded-xl duration-150">
                             <Image src="/bucket.png" width={20} height={20} alt="viewProduct" />
                             <span className="text-sm">More</span>
                         </Link>
@@ -46,21 +80,16 @@ export default function productsPreview() {
             </div>
 
             <div data-aos="fade-left" data-aos-delay="300" className="hidden xl:flex w-[400px] h-auto !opacity-60 text-white bg-[#32323266] p-4 gap-2 rounded-xl duration-150">
-                <Image src="/product.png" width={150} height={150} alt="productImage" className="object-cover rounded-xl" />
-                <div className="flex flex-col justify-between h-full leading-tight">
+                <Image src={products[2]?.image ? products[2].image : "/product.png"} width={150} height={150} alt="productImage" className="object-cover rounded-xl" />
+                <div className="flex flex-col w-full h-full leading-tight">
                     <div>
-                        <div className="text-gray-400 text-sm font-prompt">สินค้า</div>
-                        <span className="text-white">MS Product 1</span>
-                        <div className="text-gray-400 text-xs">memorious product description</div>
+                        <div className="text-gray-400 text-sm font-prompt">{products[2]?.category || "Demo"}</div>
+                        <span className="text-white">{products[2]?.label || "Demo Script 3"}</span>
+                        <div className="text-gray-400 text-xs">Top 3 of cgxlion product</div>
                     </div>
 
-                    <div className="flex items-center justify-between w-full">
-                        <span className="flex gap-2 text-gray-400 font-prompt mt-4">100 Points</span>
-
-                        <div className="flex items-center w-fit ml-6 text-white bg-[#32323266] px-4 py-2 gap-2 rounded-xl duration-150 mt-4">
-                            <Image src="/bucket.png" width={20} height={20} alt="viewProduct" />
-                            <span className="text-sm">More</span>
-                        </div>
+                    <div className="flex items-center mt-auto">
+                        <span className="text-gray-200 font-prompt">{products[2]?.price.toLocaleString() || 0} Points</span>
                     </div>
                 </div>
             </div>

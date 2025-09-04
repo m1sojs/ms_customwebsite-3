@@ -14,13 +14,17 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@next/env": "^15.4.0-canary.51",
     "@prisma/client": "^6.15.0",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@tailwindcss/typography": "^0.5.16",
     "@uiw/react-md-editor": "^4.0.8",
     "aos": "^2.3.4",
     "bcrypt": "^6.0.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.23.12",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.542.0",
     "markdown-it": "^14.1.0",
     "mongodb": "^6.16.0",
     "next": "15.3.2",
@@ -33,7 +37,9 @@
     "react-simple-typewriter": "^5.0.1",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "tailwind-scrollbar": "^4.0.2"
+    "tailwind-merge": "^3.3.1",
+    "tailwind-scrollbar": "^4.0.2",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

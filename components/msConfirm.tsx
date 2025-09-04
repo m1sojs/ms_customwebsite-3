@@ -51,12 +51,12 @@ function ConfirmUI({
         (visible &&
             <>
                 <div className={`fixed inset-0 z-[999] flex items-center justify-center fade-in ${bgColor || 'bg-black/60'} ${fading ? 'fade-in' : 'fade-out'}`} onClick={onClose} >
-                    <div onClick={(e) => e.stopPropagation()} className="flex flex-col bg-white/4 backdrop-blur-md rounded-xl gap-4 p-4 items-center justify-center w-[400px] min-h-[200px] h-auto">
+                    <div onClick={(e) => e.stopPropagation()} className="flex flex-col bg-white backdrop-blur-md rounded-4xl gap-4 p-4 items-center justify-center w-[400px] min-h-[200px] h-auto">
                         <div className="relative w-[128px] h-[128px] mt-2">
                             {image && <Image src={image} fill alt={image}/>}
                         </div>
-                        <span className="font-black text-xl mt-2 font-prompt text-center">แน่ใจใช่มั้ย?</span>
-                        <span className="mt-2 font-prompt text-center">{text}</span>
+                        <span className="font-black text-black text-xl mt-2 font-prompt text-center">แน่ใจใช่มั้ย?</span>
+                        <span className="text-black mt-2 font-prompt text-center">{text}</span>
                         <div className="flex mt-2 ml-auto gap-2">
                             <span onClick={fadingAnimation} className={`cursor-pointer p-2 rounded-full ${secondaryButtonStyle || 'bg-gray-200 text-black'}`}>
                                 {secondaryButtonText || 'ยกเลิก'}

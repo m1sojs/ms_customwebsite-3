@@ -91,7 +91,7 @@ export default function HeaderBar() {
                 <Link href="/" className="text-gray-200 hover:text-gray-500 duration-150 hover:cursor-pointer hidden md:flex font-prompt">หน้าหลัก</Link>
                 <Link href="/store" className="text-gray-200 hover:text-gray-500 duration-150 hover:cursor-pointer hidden md:flex font-prompt">สินค้าทั้งหมด</Link>
                 <Link href="/cart" className="items-center text-gray-200 hover:text-gray-500 duration-150 hover:cursor-pointer hidden md:flex font-prompt">
-                    ตะกร้าสินค้า <div className="min-w-[20px] w-auto h-[20px] px-1 ml-1 bg-[#cd0101]/60 rounded-full text-xs flex items-center justify-center">{cartLenght}</div>
+                    ตะกร้าสินค้า <div className="min-w-[20px] w-auto h-[20px] px-1 ml-1 bg-[#cd0101]/60 rounded-full text-xs flex items-center justify-center">{isLogin && cartLenght ? cartLenght : 0}</div>
                 </Link>
                 <div className="grid leading-tight">
                     <div className="md:hidden" onClick={toggleMenuDropdown}>

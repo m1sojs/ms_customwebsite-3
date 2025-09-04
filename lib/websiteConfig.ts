@@ -6,6 +6,8 @@ interface WebsiteConfig {
   websiteDomain: string;
   websiteAboutProduct: string;
   websiteAboutUs: string;
+  phoneNumber: string;
+  promptPayID: string;
 }
 
 const defaultConfig: WebsiteConfig = {
@@ -15,14 +17,16 @@ const defaultConfig: WebsiteConfig = {
   websiteDisc: '',
   websiteDomain: '',
   websiteAboutProduct: '',
-  websiteAboutUs: ''
+  websiteAboutUs: '',
+  phoneNumber: '',
+  promptPayID: ''
 };
 
 const websiteConfig: WebsiteConfig = { ...defaultConfig };
 
 async function loadConfigFromAPI(): Promise<WebsiteConfig> {
   try {
-    const baseUrl = window.location.origin
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const result = await fetch(`${baseUrl}/api/getconfig`);
     
     if (!result.ok) {

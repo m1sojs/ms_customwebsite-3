@@ -17,45 +17,15 @@ export async function GET(request: NextRequest) {
       where: { discordId: decoded.discordId },
       select: {
         id: true,
-        history: {
+        topupHistory: {
           orderBy: { createdAt: 'desc' },
-          select: {
-            name: true,
-            discount: true,
-            expire: true,
-            ip: true,
-            tokenKey: true,
-            version: true,
-            createdAt: true,
-          }
         }
       }
     });
 
     if (!user) return NextResponse.json({ message: 'ไม่พบผู้ใช้' }, { status: 404 });
-    const productNames = [...new Set(user.history.map(item => item.name))];
-    const products = await prisma.products.findMany({
-      where: {
-        name: { in: productNames }
-      },
-      select: {
-        name: true,
-        label: true,
-        price: true,
-        image: true,
-        downloadLink: true
-      }
-    });
 
-    const enrichedHistory = user.history.map(item => {
-      const product = products.find(p => p.name === item.name);
-      return {
-        ...item,
-        ...product
-      };
-    });
-
-    return NextResponse.json({ history: enrichedHistory }, { status: 200 });
+    return NextResponse.json({ topuphistory: user.topupHistory }, { status: 200 });
   } catch (error: unknown) {
     let errorMessage = 'Internal Server Error';
     if (error instanceof Error) {
