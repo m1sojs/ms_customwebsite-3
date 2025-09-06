@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const config = await loadConfigFromAPI();
-        const phoneNumber = config.promptPayID;
+        const phoneNumber = config.phoneNumber;
         const decoded = jwt.verify(token, secret) as { discordId: string };
         const user = await prisma.users.findUnique({ where: { discordId: decoded.discordId } });
 

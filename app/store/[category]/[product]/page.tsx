@@ -28,8 +28,9 @@ interface ProductInterface {
 
 export default function Product() {
   const { product } = useParams() as { product: string };
-  const [monthly, setMonthly] = useState(false)
-  const [productData, setProductData] = useState<ProductInterface[]>([])
+  const [buymodeSeleted, setBuyModeSeleted] = useState(false);
+  const [monthly, setMonthly] = useState(false);
+  const [productData, setProductData] = useState<ProductInterface[]>([]);
 
   useEffect(() => {
     Loading.init({
@@ -76,68 +77,76 @@ export default function Product() {
   }, [product]);
 
   const handleAddToCart = async () => {
-    const res = await fetch('/api/addtocart', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: productData[0]?.name,
-        monthly: monthly
-      })
-    });
+    if (buymodeSeleted) {
+      const res = await fetch('/api/addtocart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: productData[0]?.name,
+          monthly: monthly
+        })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
+      if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
 
-    window.dispatchEvent(new Event("login-success"));
-    Report.success(
-      "เสร็จสิ้น",
-      `เพิ่มสินค้าเข้าตะกร้าเรียบร้อยแล้ว`,
-      "ย้อนกลับ"
-    );
-  }
+      window.dispatchEvent(new Event("login-success"));
+      Report.success(
+        "เสร็จสิ้น",
+        `เพิ่มสินค้าเข้าตะกร้าเรียบร้อยแล้ว`,
+        "ย้อนกลับ"
+      );
+    } else {
+      Report.failure("ตรวจสอบผิดพลาด", "กรุณาเลือกรูปแบบที่ต้องการสั่งซื้อก่อน", "ย้อนกลับ")
+    };
+  };
 
   const handlePaynow = async () => {
-    msConfirm.show({
-      bgColor: "bg-white/4 backdrop-blur-md",
-      text: `ราคาสินค้าทั้งหมดคือ ${productData[0]?.price}฿ ต้องการชำระเงินเลยหรือไม่`,
-      image: "/question-sign.png",
-      secondaryButtonStyle: "bg-white text-black font-prompt",
-      secondaryButtonText: "กลับ",
-      primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
-      primaryButtonText: "ชำระเงิน"
-    }).onNext(async () => {
-      Loading.pulse("Checking Out . . .");
-      try {
-        const res = await fetch('/api/paynow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: productData[0]?.name,
-            monthly: monthly
-          })
-        });
+    if (buymodeSeleted) {
+      msConfirm.show({
+        bgColor: "bg-white/4 backdrop-blur-md",
+        text: `ราคาสินค้าทั้งหมดคือ ${productData[0]?.price}฿ ต้องการชำระเงินเลยหรือไม่`,
+        image: "/question-sign.png",
+        secondaryButtonStyle: "bg-white text-black font-prompt",
+        secondaryButtonText: "กลับ",
+        primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
+        primaryButtonText: "ชำระเงิน"
+      }).onNext(async () => {
+        Loading.pulse("Checking Out . . .");
+        try {
+          const res = await fetch('/api/paynow', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: productData[0]?.name,
+              monthly: monthly
+            })
+          });
 
-        const data = await res.json();
+          const data = await res.json();
 
-        if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
-        window.dispatchEvent(new Event("login-success"));
-        Report.success(
-          "เสร็จสิ้น",
-          "ซื้อสินค้าเรียบร้อยแล้วสามารถดูสินค้าได้ที่ โปรไฟล์",
-          "ย้อนกลับ"
-        );
-      } catch (error) {
-        console.error("Error cancel pay cart:", error);
-      } finally {
-        setTimeout(() => Loading.remove(), 1000);
-      }
-    })
-  }
+          if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
+          window.dispatchEvent(new Event("login-success"));
+          Report.success(
+            "เสร็จสิ้น",
+            "ซื้อสินค้าเรียบร้อยแล้วสามารถดูสินค้าได้ที่ โปรไฟล์",
+            "ย้อนกลับ"
+          );
+        } catch (error) {
+          console.error("Error cancel pay cart:", error);
+        } finally {
+          setTimeout(() => Loading.remove(), 1000);
+        }
+      });
+    } else {
+      Report.failure("ตรวจสอบผิดพลาด", "กรุณาเลือกรูปแบบที่ต้องการสั่งซื้อก่อน", "ย้อนกลับ")
+    };
+  };
 
   return (
     <div data-aos="fade-up" className="grid grid-rows-[20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-5 sm:p-20 font-[family-name:var(--font-prompt)]">
@@ -178,7 +187,10 @@ export default function Product() {
                 type="radio"
                 name="productType"
                 value="monthly"
-                onClick={() => setMonthly(true)}
+                onClick={() => {
+                  setMonthly(true);
+                  setBuyModeSeleted(true);
+                }}
                 className="appearance-none w-4 h-4 rounded-full border border-white checked:bg-[#ff6161] checked:border-white transition duration-200"
               />
               รายเดือน
@@ -188,7 +200,10 @@ export default function Product() {
                 type="radio"
                 name="productType"
                 value="lifetime"
-                onClick={() => setMonthly(false)}
+                onClick={() => {
+                  setMonthly(false);
+                  setBuyModeSeleted(true);
+                }}
                 className="appearance-none w-4 h-4 rounded-full border border-white checked:bg-[#ff6161] checked:border-white transition duration-200"
               />
               ถาวร

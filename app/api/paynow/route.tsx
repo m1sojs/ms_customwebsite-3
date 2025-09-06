@@ -4,15 +4,15 @@ import jwt from 'jsonwebtoken';
 import crypto from "crypto";
 
 function generateKey(length = 16): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  const bytes = crypto.randomBytes(length);
-  let result = "";
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    const bytes = crypto.randomBytes(length);
+    let result = "";
 
-  for (let i = 0; i < length; i++) {
-    result += chars[bytes[i] % chars.length];
-  }
+    for (let i = 0; i < length; i++) {
+        result += chars[bytes[i] % chars.length];
+    }
 
-  return "Cgxlion_"+result;
+    return "Cgxlion_" + result;
 }
 
 export async function POST(request: NextRequest) {
@@ -64,6 +64,11 @@ export async function POST(request: NextRequest) {
             prisma.users.update({
                 where: { discordId: decoded.discordId },
                 data: { point: { decrement: product[0].price } }
+            }),
+
+            prisma.products.update({
+                where: { name: product[0].name },
+                data: { stock: { decrement: 1 }, buyedCount: { increment: 1 } }
             }),
 
             prisma.history.createMany({

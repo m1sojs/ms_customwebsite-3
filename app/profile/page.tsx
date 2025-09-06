@@ -15,6 +15,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { msAsk } from "@/components/msAsk";
+import websiteConfig from "@/lib/websiteConfig";
+import Link from "next/link";
 
 
 interface HistoryInterface {
@@ -39,17 +42,22 @@ interface TopupHistoryInterface {
   createdAt: string;
 }
 
+function isIPv4(input: string): boolean {
+  const ipv4Regex =
+    /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
+  return ipv4Regex.test(input);
+}
+
 export default function Profile() {
   const [page, setPage] = useState("scripts");
   const [copied, setCopied] = useState(false);
-  const [editIp, setEditIp] = useState<Record<number, boolean>>({});
   const [history, setHistory] = useState<HistoryInterface[]>([]);
   const [topupHistory, setTopupHistory] = useState<TopupHistoryInterface[]>([]);
   const [userData, setUserData] = useState({ id: "", avatar: "", username: "", email: "", point: 0 });
 
   useEffect(() => {
     Loading.init({
-      svgColor: "#cdff61",
+      svgColor: websiteConfig.themeColor,
     });
 
     Report.init({
@@ -171,69 +179,40 @@ export default function Profile() {
             ) : (
               history.map((value, index) => (
                 <div key={index} className="grid grid-cols-6 w-full p-2 bg-white/4 border-white/20 rounded-lg text-sm sm:text-base">
-                  <span className="text-center">{value.label}</span>
+                  <span className="text-center hover:underline cursor-pointer">{value.label}</span>
 
-                  {editIp[index] ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        name="ip"
-                        id={`ip-${index}`}
-                        value={value.ip}
-                        placeholder="ไอพีเซิฟเวอร์"
-                        className="bg-white/1 border border-white/4 hover:bg-[#cd0101]/60 outline-none text-sm font-prompt duration-150 w-[50%] p-1 px-2 rounded-xl"
-                        onChange={(e) => {
-                          const newHistory = [...history];
-                          newHistory[index].ip = e.target.value;
-                          setHistory(newHistory);
-                        }}
-                      />
-                      <FontAwesomeIcon
-                        onClick={() => {
-                          msConfirm.show({
-                            bgColor: "bg-white/4 backdrop-blur-md",
-                            text: `คุณต้องการแก้ไขไอพีจริงๆใช้มั้ย (หลังจากแก้ไขแล้วจะไม่สามารถเปลี่ยนแปลงได้เป็นเวลา 1ชั่วโมง)`,
-                            image: "/question-sign.png",
-                            secondaryButtonStyle: "bg-white text-black font-prompt",
-                            secondaryButtonText: "กลับ",
-                            primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
-                            primaryButtonText: "เปลี่ยนเลย"
-                          }).onNext(async () => {
-                            Loading.pulse("Changing IP . . .");
-                            try {
-                              setEditIp({ ...editIp, [index]: false })
-                              handleChangeIP(value.name, history[index].ip)
-                            } catch (error) {
-                              console.error("Error:", error);
-                            } finally {
-                              setTimeout(() => Loading.remove(), 1000);
+                  <span className="text-center">
+                    {value.ip}{" "}
+                    <FontAwesomeIcon
+                      onClick={() => {
+                        msAsk.show({
+                          bgColor: "bg-white/4 backdrop-blur-md",
+                          headerText: "อัพเดท IP Server",
+                          text: `หลังจากแก้ไขแล้วจะไม่สามารถเปลี่ยนแปลงได้เป็นเวลา 1ชั่วโมง`,
+                          placeholder: "ระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4",
+                          secondaryButtonStyle: "bg-white text-black font-prompt",
+                          secondaryButtonText: "กลับ",
+                          primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
+                          primaryButtonText: "เปลี่ยนเลย"
+                        }).onNext(async (inputValue) => {
+                          Loading.pulse("Changing IP . . .");
+                          try {
+                            if (isIPv4(inputValue)) {
+                              handleChangeIP(value.name, inputValue)
+                            } else {
+                              Report.failure("ตรวจสอบผิดพลาด", "กรุณาระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4 เท่านั้น", "ย้อนกลับ");
                             }
-                          })
-                        }}
-                        icon={faCheck}
-                        className="text-xs duration-150 cursor-pointer"
-                      />
-                      <FontAwesomeIcon
-                        onClick={() => {
-                          const newHistory = [...history];
-                          newHistory[index].ip = history[index].ip;
-                          setHistory(newHistory);
-                          setEditIp({ ...editIp, [index]: false })
-                        }}
-                        icon={faX}
-                        className="text-xs duration-150 cursor-pointer"
-                      />
-                    </div>
-                  ) : (
-                    <span className="text-center">
-                      {value.ip}{" "}
-                      <FontAwesomeIcon
-                        onClick={() => setEditIp({ ...editIp, [index]: true })}
-                        icon={faPen}
-                        className="text-gray-500 text-xs duration-150 cursor-pointer"
-                      />
-                    </span>
-                  )}
+                          } catch (error) {
+                            console.error("Error:", error);
+                          } finally {
+                            setTimeout(() => Loading.remove(), 1000);
+                          }
+                        })
+                      }}
+                      icon={faPen}
+                      className="text-gray-500 text-xs duration-150 cursor-pointer"
+                    />
+                  </span>
 
                   <span className="text-center">
                     {value.expire
@@ -287,7 +266,7 @@ export default function Profile() {
                                 bgColor: "bg-white/4 backdrop-blur-md",
                                 text: `คุณต้องการรีเซ็ตจริงๆใช้มั้ย (หลังจากรีเซ็ตแล้วจะไม่สามารถรีเซ็ตได้เป็นเวลา 1ชั่วโมง)`,
                                 image: "/question-sign.png",
-                                secondaryButtonStyle: "px-4 bg-gray-400 text-black font-prompt",
+                                secondaryButtonStyle: "px-4 text-black font-prompt",
                                 secondaryButtonText: "กลับ",
                                 primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
                                 primaryButtonText: "รีเซ็ตเลย"
@@ -295,7 +274,7 @@ export default function Profile() {
                                 Loading.pulse("Reseting Token . . .");
                                 try {
                                   handleTokenReset(value.name)
-                                  setTimeout(()=>{window.location.reload()},1000)
+                                  setTimeout(() => { window.location.reload() }, 1000)
                                 } catch (error) {
                                   console.error("Error:", error);
                                 } finally {
@@ -315,7 +294,7 @@ export default function Profile() {
               ))
             )}
           </div>
-        )} 
+        )}
         {page === "history" && (
           <div className="flex flex-col w-full min-h-[120px] p-4 gap-2 bg-white/4 rounded-xl backdrop-blur-md overflow-hidden">
             {history.length > 0 && (
@@ -333,7 +312,7 @@ export default function Profile() {
             ) : (
               history.map((value, index) => (
                 <div key={index} className="grid grid-cols-5 w-full p-2 bg-white/4 border-white/20 rounded-lg text-sm sm:text-base">
-                  <span className="text-center">{value.label}</span>
+                  <span className="text-center hover:underline cursor-pointer">{value.label}</span>
                   <span className="text-center">{value.price.toLocaleString()}฿ </span>
                   <span className="text-center">{value.discount ? value.discount : '-'}</span>
                   <span className="text-center">{value.expire ? new Date(value.expire).toLocaleDateString("th-TH", {
