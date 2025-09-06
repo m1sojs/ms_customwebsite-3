@@ -7,7 +7,7 @@ import { Report } from 'notiflix/build/notiflix-report-aio';
 import 'aos/dist/aos.css';
 import AOS from 'aos';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faCoins, faDownload, faKey, faPen, faRotate, faX } from "@fortawesome/free-solid-svg-icons";
+import { faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
 import { msConfirm } from "@/components/msConfirm";
 import {
   Tooltip,
@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/tooltip"
 import { msAsk } from "@/components/msAsk";
 import websiteConfig from "@/lib/websiteConfig";
-import Link from "next/link";
-
 
 interface HistoryInterface {
   name: string;
