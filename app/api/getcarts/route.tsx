@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
         label: true,
         name: true,
         price: true,
+        monthlyPrice: true,
         image: true
       }
     });

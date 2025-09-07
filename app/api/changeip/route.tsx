@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
     const secret = process.env.JWT_SECRET || 'your-secret-key';
-    const { name, newIP } = await request.json();
+    const { id, name, newIP } = await request.json();
 
     if (!token) {
         return NextResponse.json({ message: 'ไม่ได้เข้าสู่ระบบ' }, { status: 401 });
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         }
 
         const ipChangeCD = await prisma.history.findFirst({
-            where: { userId: user.id, name },
+            where: { userId: user.id, id, name },
             select: { ipchangecd: true }
         })
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         }
 
         const updatedUser = await prisma.history.updateMany({
-            where: { userId: user.id, name },
+            where: { userId: user.id, id, name },
             data: { ip: newIP, ipchangecd: new Date(Date.now() + 60 * 60 * 1000) },
         })
 

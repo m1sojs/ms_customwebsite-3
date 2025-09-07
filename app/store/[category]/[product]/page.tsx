@@ -12,12 +12,14 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { useParams } from "next/navigation";
 import { msConfirm } from "@/components/msConfirm";
+import websiteConfig from "@/lib/websiteConfig";
 
 interface ProductInterface {
   id: number;
   label: string;
   name: string;
   price: number;
+  monthlyPrice: number;
   image: string;
   video: string;
   description: string;
@@ -33,18 +35,20 @@ export default function Product() {
   const [productData, setProductData] = useState<ProductInterface[]>([]);
 
   useEffect(() => {
-    Loading.init({
-      svgColor: "#cdff61",
-    });
-
-    Report.init({
-      fontFamily: "Prompt"
-    })
+    Loading.init({ svgColor: websiteConfig.themeColor });
+    Report.init({ fontFamily: "Prompt" });
 
     AOS.init({
       duration: 1000,
       once: true,
     });
+
+    const auth = async () => {
+      const res = await fetch("/api/auth");
+      if (!res.ok) return location.href = "" + websiteConfig.loginAPI + "";;
+    }
+
+    auth()
   }, []);
 
   useEffect(() => {
@@ -108,7 +112,7 @@ export default function Product() {
     if (buymodeSeleted) {
       msConfirm.show({
         bgColor: "bg-white/4 backdrop-blur-md",
-        text: `ราคาสินค้าทั้งหมดคือ ${productData[0]?.price}฿ ต้องการชำระเงินเลยหรือไม่`,
+        text: `ราคาสินค้าคือ ${monthly ? productData[0]?.monthlyPrice+"/เดือน" : productData[0]?.price}฿ ต้องการชำระเงินเลยหรือไม่`,
         image: "/question-sign.png",
         secondaryButtonStyle: "bg-white text-black font-prompt",
         secondaryButtonText: "กลับ",
@@ -213,7 +217,7 @@ export default function Product() {
 
         <div className="flex flex-col items-end justify-between ml-auto gap-2">
           <span className="font-bold text-xl text-white bg-clip-text">
-            {productData[0]?.price.toLocaleString()}฿
+            {monthly ? productData[0]?.monthlyPrice.toLocaleString() : productData[0]?.price.toLocaleString()}฿ <span className="text-xs text-gray-400">{monthly && "/เดือน"}</span>
           </span>
           <div className="flex gap-2">
             <div onClick={handleAddToCart} className="flex items-center justify-center w-fit text-white bg-white/4 hover:bg-[#cd0101]/60 border border-white/3 backdrop-blur-md overflow-hidden p-2 px-4 gap-2 rounded-md font-prompt duration-300 cursor-pointer">

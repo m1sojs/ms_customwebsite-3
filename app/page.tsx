@@ -49,7 +49,7 @@ export default function Home() {
         window.history.replaceState({}, document.title, window.location.pathname);
         window.dispatchEvent(new Event("login-success"));
 
-        await router.push("/");
+        router.push("/");
         router.refresh();
       } catch (error) {
         console.error("Error processing login:", error);

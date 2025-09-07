@@ -13,6 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model admin {
+  id        Int      @id @default(autoincrement())
+  discordId String   @unique
+  lastLogin DateTime @default(now())
+}
+
 model users {
   id           Int            @id @default(autoincrement())
   discordId    String         @unique
@@ -30,6 +36,7 @@ model products {
   name         String  @unique
   label        String  @unique
   price        Int
+  monthlyPrice Int     @default(0)
   image        String
   video        String
   category     String  @default("")
@@ -39,14 +46,17 @@ model products {
   buyedCount   Int     @default(0)
   stock        Int     @default(0)
   isNew        Boolean @default(false)
+  repeatable   Boolean @default(false)
 }
 
 model discountCode {
-  id          Int    @id @default(autoincrement())
-  code        String @unique
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
   minDiscount Int
   maxDiscount Int
-  percent     Int    @default(0)
+  percent     Int       @default(0)
+  count       Int       @default(-1)
+  expire      DateTime?
 }
 
 model history {
@@ -78,19 +88,11 @@ model topupHistory {
 model category {
   id    Int    @id @default(autoincrement())
   label String
-  name  String @default("")
+  name  String @unique @default("")
   image String
 }
 
 model webConfig {
   id        Int  @id @default(autoincrement())
   webconfig Json
-}
-
-model AdminLog {
-  id        Int      @id @default(autoincrement())
-  reason    String
-  email     String
-  ipaddress String
-  timestamp DateTime @default(now())
 }

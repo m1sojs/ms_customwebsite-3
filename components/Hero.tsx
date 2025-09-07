@@ -1,12 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import CodeTyper from "./codeTyping";
+import websiteConfig from "@/lib/websiteConfig";
 
 export default function Hero() {
-    const discordLink = process.env.NEXT_PUBLIC_DISCORD_LINK
-
     const handleClickContect = () => {
-        window.open(discordLink, "_blank");
+        window.open(websiteConfig.discordLink, "_blank");
     };
 
     return (
@@ -33,7 +32,7 @@ export default function Hero() {
                         <span className="text-sm">Contect Us</span>
                     </div>
 
-                    <Link href="/products" className="flex items-center text-white bg-[#323232]/60 hover:bg-[#ff6161]/60 px-5 py-2 gap-2 rounded-xl duration-150 hover:cursor-pointer" >
+                    <Link href="/store" className="flex items-center text-white bg-[#323232]/60 hover:bg-[#ff6161]/60 px-5 py-2 gap-2 rounded-xl duration-150 hover:cursor-pointer" >
                         <Image src="/bucket.png" width={20} height={20} alt="products" />
                         <span className="text-sm">Products</span>
                     </Link>

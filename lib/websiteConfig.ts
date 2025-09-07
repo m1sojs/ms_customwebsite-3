@@ -8,6 +8,8 @@ interface WebsiteConfig {
   websiteAboutUs: string;
   phoneNumber: string;
   promptPayID: string;
+  loginAPI: string;
+  discordLink: string;
 }
 
 const defaultConfig: WebsiteConfig = {
@@ -19,7 +21,9 @@ const defaultConfig: WebsiteConfig = {
   websiteAboutProduct: '',
   websiteAboutUs: '',
   phoneNumber: '',
-  promptPayID: ''
+  promptPayID: '',
+  loginAPI: '',
+  discordLink: ''
 };
 
 const websiteConfig: WebsiteConfig = { ...defaultConfig };

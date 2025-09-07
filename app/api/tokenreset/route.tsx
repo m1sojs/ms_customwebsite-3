@@ -18,7 +18,7 @@ function generateKey(length = 16): string {
 export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
     const secret = process.env.JWT_SECRET || 'your-secret-key';
-    const { name } = await request.json();
+    const { id, name } = await request.json();
 
     if (!token) {
         return NextResponse.json({ message: 'ไม่ได้เข้าสู่ระบบ' }, { status: 401 });
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         }
 
         const tokenResetCD = await prisma.history.findFirst({
-            where: { userId: user.id, name },
+            where: { userId: user.id, id, name },
             select: { tokenresetcd: true }
         })
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         }
 
         const updatedUser = await prisma.history.updateMany({
-            where: { userId: user.id, name },
+            where: { userId: user.id, id, name },
             data: { tokenKey: generateKey(), tokenresetcd: new Date(Date.now() + 60 * 60 * 1000) },
         })
 

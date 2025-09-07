@@ -6,11 +6,11 @@ import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faCoins, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from "next/navigation";
+import websiteConfig from "@/lib/websiteConfig";
 
 export default function HeaderBar() {
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(false);
-    const discordLoginApi = process.env.NEXT_PUBLIC_DISCORD_LOGIN_API;
     const [discordId, setDiscordId] = useState<string | null>(null);
     const [discordAvatar, setDiscordAvatar] = useState<string | null>(null);
     const [discordName, setDiscordName] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function HeaderBar() {
     }, []);
 
     const handleClickLogin = () => {
-        location.href = "" + discordLoginApi + "";
+        location.href = "" + websiteConfig.loginAPI + "";
     };
 
     const handleLogout = async () => {

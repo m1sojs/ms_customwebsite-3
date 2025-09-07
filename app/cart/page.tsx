@@ -23,6 +23,7 @@ interface Cart {
   name: string;
   monthly: boolean;
   price: number;
+  monthlyPrice: number;
   image: string;
   label: string;
 }
@@ -30,21 +31,26 @@ interface Cart {
 export default function Cart() {
   const [step, setStep] = useState(1);
   const [cart, setCart] = useState<Cart[]>([]);
-  const totalPrice = cart.reduce((sum, item) => sum + item.price, 0)
+  const totalPrice = cart.reduce((sum, item) => {
+    const product = cart.find(p => p.name === item.name);
+    if (!product) return sum;
+    return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : product.price);
+  }, 0);
 
   useEffect(() => {
-    Loading.init({
-      svgColor: websiteConfig.themeColor,
-    });
-
-    Report.init({
-      fontFamily: "Prompt"
-    })
+    Loading.init({ svgColor: websiteConfig.themeColor });
+    Report.init({ fontFamily: "Prompt" })
 
     AOS.init({
       duration: 1000,
       once: true,
     });
+
+    const auth = async () => {
+      const res = await fetch("/api/auth");
+      if (!res.ok) return location.href = "" + websiteConfig.loginAPI + "";;
+    }
+    auth();
   }, []);
 
   useEffect(() => {
@@ -148,7 +154,7 @@ export default function Cart() {
                       </div>
                       <div>
                         <p className="font-semibold">{value.label}</p>
-                        <p className="text-sm text-gray-300">{value.price}฿</p>
+                        <p className="text-sm text-gray-300">{value.monthly ? value.monthlyPrice : value.price}฿ {value.monthly && "/เดือน"}</p>
                         <p className="text-sm text-gray-300">ประเภท : {value.monthly ? "รายเดือน" : "ถาวร"}</p>
                       </div>
                     </div>
@@ -161,7 +167,7 @@ export default function Cart() {
                   </div>
                 ))
               )}
-              <div className="text-xl font-bold ml-auto mt-4">{cart.length === 0 ? "" : `ราคารวม : ${totalPrice.toLocaleString()}`}</div>
+              <div className="text-xl font-bold ml-auto mt-4">{cart.length === 0 ? "" : `ราคารวม : ${totalPrice.toLocaleString()}฿`}</div>
               {cart.length > 0 && (
                 <button
                   onClick={() => handlePay()}
@@ -185,7 +191,7 @@ export default function Cart() {
               <FontAwesomeIcon icon={faCheckCircle} className="text-green-400 text-5xl" />
               <h2 className="text-xl font-bold">ชำระเงินสำเร็จ!</h2>
               <p className="text-gray-300">ขอบคุณสำหรับการสั่งซื้อ 🎉</p>
-              <Link 
+              <Link
                 href={"/profile"}
                 className="flex items-center justify-center gap-2 border-2 border-[var(--theme-color)] bg-[var(--theme-color)] hover:bg-[var(--theme-color)]/70 text-white font-semibold py-2 px-4 rounded-xl duration-300"
               >

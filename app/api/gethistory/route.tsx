@@ -17,9 +17,14 @@ export async function GET(request: NextRequest) {
       where: { discordId: decoded.discordId },
       select: {
         id: true,
+        discordId: true,
+        email: true,
+        username: true,
+        point: true,
         history: {
           orderBy: { createdAt: 'desc' },
           select: {
+            id: true,
             name: true,
             discount: true,
             expire: true,
@@ -28,11 +33,15 @@ export async function GET(request: NextRequest) {
             version: true,
             createdAt: true,
           }
+        },
+        topupHistory: {
+          orderBy: { createdAt: 'desc' },
         }
       }
     });
 
     if (!user) return NextResponse.json({ message: 'ไม่พบผู้ใช้' }, { status: 404 });
+
     const productNames = [...new Set(user.history.map(item => item.name))];
     const products = await prisma.products.findMany({
       where: {
@@ -42,20 +51,32 @@ export async function GET(request: NextRequest) {
         name: true,
         label: true,
         price: true,
-        image: true,
+        version: true,
         downloadLink: true
       }
     });
 
     const enrichedHistory = user.history.map(item => {
       const product = products.find(p => p.name === item.name);
+
       return {
         ...item,
-        ...product
+        label: product?.label ?? null,
+        price: product?.price ?? null,
+        downloadLink: product?.downloadLink ?? null,
+        latestVersion: product?.version ?? null,
       };
     });
 
-    return NextResponse.json({ history: enrichedHistory }, { status: 200 });
+    return NextResponse.json(
+      {
+        user: user,
+        history: enrichedHistory,
+        topupHistory: user.topupHistory,
+      },
+      { status: 200 }
+    );
+
   } catch (error: unknown) {
     let errorMessage = 'Internal Server Error';
     if (error instanceof Error) {

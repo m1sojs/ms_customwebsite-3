@@ -9,15 +9,15 @@ type CartItem = {
 };
 
 function generateKey(length = 16): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  const bytes = crypto.randomBytes(length);
-  let result = "";
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    const bytes = crypto.randomBytes(length);
+    let result = "";
 
-  for (let i = 0; i < length; i++) {
-    result += chars[bytes[i] % chars.length];
-  }
+    for (let i = 0; i < length; i++) {
+        result += chars[bytes[i] % chars.length];
+    }
 
-  return "Cgxlion_"+result;
+    return "Cgxlion_" + result;
 }
 
 function isCartItemArray(value: unknown): value is CartItem[] {
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         const productNames = [...new Set(cart.map(item => item.name))];
         const products = await prisma.products.findMany({
             where: { name: { in: productNames } },
-            select: { name: true, price: true, id: true },
+            select: { name: true, price: true, monthlyPrice: true, id: true, version: true, repeatable: true },
         });
 
         const histories = await prisma.history.findMany({
@@ -74,16 +74,24 @@ export async function GET(request: NextRequest) {
             select: { name: true }
         });
 
+
         const boughtNames = new Set(histories.map(h => h.name));
 
-        const duplicateItems = cart.filter(item => boughtNames.has(item.name));
+        const duplicateItems = cart.filter(item => {
+            const product = products.find(p => p.name === item.name);
+            return boughtNames.has(item.name) && !product?.repeatable;
+        });
         if (duplicateItems.length > 0) {
             return NextResponse.json({
                 message: `คุณได้ซื้อสินค้าไปแล้ว: ${duplicateItems.map(i => i.name).join(', ')}`
             }, { status: 400 });
         }
 
-        const totalPrice = products.reduce((sum, item) => sum + item.price, 0);
+        const totalPrice = cart.reduce((sum, item) => {
+            const product = products.find(p => p.name === item.name);
+            if (!product) return sum;
+            return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : product.price);
+        }, 0);
 
         if (user.point < totalPrice) {
             return NextResponse.json({ message: 'Point ของท่านคงเหลือไม่เพียงพอ' }, { status: 400 });
@@ -96,15 +104,19 @@ export async function GET(request: NextRequest) {
             }),
 
             prisma.history.createMany({
-                data: cart.map(item => ({
-                    name: item.name,
-                    discount: null,
-                    userId: user.id,
-                    tokenKey: generateKey(),
-                    expire: item.monthly
-                        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                        : null,
-                }))
+                data: cart.map(item => {
+                    const product = products.find(p => p.name === item.name);
+                    return {
+                        name: item.name,
+                        discount: null,
+                        userId: user.id,
+                        tokenKey: generateKey(),
+                        version: product?.version ?? undefined, 
+                        expire: item.monthly
+                            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                            : null,
+                    };
+                })
             }),
 
             prisma.users.update({

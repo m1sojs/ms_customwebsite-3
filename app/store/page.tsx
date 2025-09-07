@@ -6,6 +6,7 @@ import { Loading } from "notiflix/build/notiflix-loading-aio";
 import "aos/dist/aos.css";
 import AOS from "aos";
 import Link from "next/link";
+import websiteConfig from "@/lib/websiteConfig";
 
 interface Category {
   id: number;
@@ -19,7 +20,7 @@ export default function Products() {
   const [category, setCategory] = useState<Category[]>([])
 
   useEffect(() => {
-    Loading.init({ svgColor: "#cd0101" });
+    Loading.init({ svgColor: websiteConfig.themeColor });
 
     AOS.init({
       duration: 1000,

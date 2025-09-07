@@ -7,6 +7,7 @@ import { Loading } from 'notiflix/build/notiflix-loading-aio';
 import 'aos/dist/aos.css';
 import AOS from 'aos';
 import { useParams } from "next/navigation";
+import websiteConfig from "@/lib/websiteConfig";
 
 interface ProductInterface {
   id: number;
@@ -24,13 +25,18 @@ export default function Category() {
 
   useEffect(() => {
     Loading.init({
-      svgColor: "#cdff61",
+      svgColor: websiteConfig.themeColor,
     });
 
     AOS.init({
       duration: 1000,
       once: true,
     });
+    
+    const auth = async () => {
+      const res = await fetch("/api/auth");
+      if (!res.ok) return location.href = "" + websiteConfig.loginAPI + "";;
+    }
   }, []);
 
   useEffect(() => {

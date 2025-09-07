@@ -7,7 +7,7 @@ import { Report } from 'notiflix/build/notiflix-report-aio';
 import 'aos/dist/aos.css';
 import AOS from 'aos';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
 import { msConfirm } from "@/components/msConfirm";
 import {
   Tooltip,
@@ -19,6 +19,7 @@ import { msAsk } from "@/components/msAsk";
 import websiteConfig from "@/lib/websiteConfig";
 
 interface HistoryInterface {
+  id: number;
   name: string;
   label: string;
   discount: string;
@@ -28,6 +29,7 @@ interface HistoryInterface {
   price: number;
   downloadLink: string;
   version: string;
+  latestVersion: string;
   expire: string;
   createdAt: string;
 }
@@ -73,14 +75,9 @@ export default function Profile() {
       Loading.pulse("Loading . . .");
       try {
         const res = await fetch('/api/me', { credentials: 'include' });
-        const res2 = await fetch('/api/gethistory');
-        const res3 = await fetch('/api/gettopuphistory');
-        if (!res.ok && !res2.ok && !res3.ok) throw new Error("Failed to fetch user data");
+        if (!res.ok) throw new Error("Failed to fetch user data");
         const data = await res.json();
-        const data2 = await res2.json();
-        const data3 = await res3.json();
-        setHistory(data2.history);
-        setTopupHistory(data3.topuphistory);
+        updataHistory();
         setUserData({ id: data.id, avatar: data.avatar, username: data.global_name, email: data.email, point: data.point });
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -94,13 +91,22 @@ export default function Profile() {
     getUserProfile();
   }, []);
 
-  const handleChangeIP = async (name: string, newip: string) => {
+  const updataHistory = async () => {
+    const res = await fetch('/api/gethistory');
+    if (!res.ok) throw new Error("Failed to fetch user data");
+    const data = await res.json();
+    setHistory(data.history);
+    setTopupHistory(data.topupHistory);
+  }
+
+  const handleChangeIP = async (id: number, name: string, newip: string) => {
     const res = await fetch('/api/changeip', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        id,
         name: name,
         newIP: newip
       })
@@ -110,16 +116,18 @@ export default function Profile() {
 
     if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
 
+    updataHistory();
     Report.success("เสร็จสิ้น", "แก้ไขไอพีเรียบร้อยแล้ว", "ย้อนกลับ");
   }
 
-  const handleTokenReset = async (name: string) => {
+  const handleTokenReset = async (id: number, name: string) => {
     const res = await fetch('/api/tokenreset', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        id,
         name: name
       })
     });
@@ -128,13 +136,31 @@ export default function Profile() {
 
     if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
 
+    updataHistory();
     Report.success("เสร็จสิ้น", "รีเซ็ตเรียบร้อยแล้ว", "ย้อนกลับ");
   }
 
   const handleCopy = (value: string) => {
-    navigator.clipboard.writeText(value)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  const handleDownload = async (id: number, name: string, link: string) => {
+    location.href = "" + link + "";
+    console.log(id)
+    const res = await fetch('/api/updateversion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id,
+        name
+      })
+    });
+    if (!res.ok) throw new Error("Failed to update user product version");
+    updataHistory();
   }
 
   return (
@@ -196,7 +222,7 @@ export default function Profile() {
                           Loading.pulse("Changing IP . . .");
                           try {
                             if (isIPv4(inputValue)) {
-                              handleChangeIP(value.name, inputValue)
+                              handleChangeIP(value.id, value.name, inputValue)
                             } else {
                               Report.failure("ตรวจสอบผิดพลาด", "กรุณาระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4 เท่านั้น", "ย้อนกลับ");
                             }
@@ -223,7 +249,22 @@ export default function Profile() {
                       )} วัน`
                       : "-"}
                   </span>
-                  <span className="text-center">{value.version}</span>
+                  <span className="text-center">
+                    {value.version}{" "}
+                    {value.latestVersion != value.version && <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <FontAwesomeIcon
+                            icon={faArrowDown}
+                            className="text-red-400 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>เวอร์ชั่นของคุณเก่าแล้ว</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>}
+                  </span>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -245,7 +286,7 @@ export default function Profile() {
                           <FontAwesomeIcon
                             icon={faDownload}
                             className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
-                            onClick={() => { location.href = `${value.downloadLink}` }}
+                            onClick={() => handleDownload(value.id, value.name, value.downloadLink)}
                           />
                         </TooltipTrigger>
                         <TooltipContent>
@@ -271,8 +312,7 @@ export default function Profile() {
                               }).onNext(async () => {
                                 Loading.pulse("Reseting Token . . .");
                                 try {
-                                  handleTokenReset(value.name)
-                                  setTimeout(() => { window.location.reload() }, 1000)
+                                  handleTokenReset(value.id, value.name)
                                 } catch (error) {
                                   console.error("Error:", error);
                                 } finally {
