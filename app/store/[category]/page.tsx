@@ -32,11 +32,6 @@ export default function Category() {
       duration: 1000,
       once: true,
     });
-    
-    const auth = async () => {
-      const res = await fetch("/api/auth");
-      if (!res.ok) return location.href = "" + websiteConfig.loginAPI + "";;
-    }
   }, []);
 
   useEffect(() => {
