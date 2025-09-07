@@ -80,10 +80,10 @@ export default function HeaderBar() {
     return (
         <div className="fixed z-999 flex justify-between items-center text-white w-full p-10 font-[family-name:var(--font-poppins)]">
             <div className="flex gap-3 items-center bg-white/4 border border-white/3 backdrop-blur-md p-2 px-4 rounded-xl shadow-lg">
-                <Link href="/"><Image src="/mainlogo.png" width={50} height={50} alt="logo" className="rounded-xl" /></Link>
+                <Link href="/"><Image src={websiteConfig.websiteLogo ? websiteConfig.websiteLogo : "/mainlogo.png"} width={45} height={45} alt="logo" className="rounded-xl" /></Link>
                 <div className="grid leading-tight">
-                    <span className="hidden sm:flex">CgxLion Studio</span>
-                    <span className="hidden sm:flex text-xs text-gray-400">Fivem&apos;s Resource Store</span>
+                    <span className="hidden sm:flex">{websiteConfig.websiteName}</span>
+                    <span className="hidden sm:flex text-xs text-gray-400">{websiteConfig.websiteDisc}</span>
                 </div>
             </div>
 
