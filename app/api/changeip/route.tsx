@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
         const updatedUser = await prisma.history.updateMany({
             where: { userId: user.id, id, name },
-            data: { ip: newIP, ipchangecd: new Date(Date.now() + Number(config.changeIpCooldown)) },
+            data: { ip: newIP, ipchangecd: new Date(Date.now() + Number(config.changeIpCooldown) * 1000) },
         })
 
         return NextResponse.json({ message: 'แก้ไขไอพีสำเร็จ', updatedUser });

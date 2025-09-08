@@ -49,6 +49,23 @@ function isIPv4(input: string): boolean {
   return ipv4Regex.test(input);
 }
 
+function formatDuration(seconds: number): string {
+  const days = Math.floor(seconds / (24 * 60 * 60));
+  seconds %= 24 * 60 * 60;
+  const hours = Math.floor(seconds / 3600);
+  seconds %= 3600;
+  const minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  const parts = [];
+  if (days) parts.push(`${days} วัน`);
+  if (hours) parts.push(`${hours} ชั่วโมง`);
+  if (minutes) parts.push(`${minutes} นาที`);
+  if (seconds) parts.push(`${seconds} วินาที`);
+
+  return parts.join(" ") || "0 วินาที";
+}
+
 export default function Profile() {
   const [page, setPage] = useState("scripts");
   const [copied, setCopied] = useState(false);
@@ -218,7 +235,7 @@ export default function Profile() {
                               .show({
                                 bgColor: "bg-white/4 backdrop-blur-md",
                                 headerText: "อัพเดท IP Server",
-                                text: `หลังจากแก้ไขแล้วจะไม่สามารถเปลี่ยนแปลงได้เป็นเวลา 1ชั่วโมง`,
+                                text: `หลังจากแก้ไขแล้วจะไม่สามารถเปลี่ยนแปลงได้เป็นเวลา ${formatDuration(Number(websiteConfig.changeIpCooldown))}`,
                                 placeholder: "ระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4",
                                 secondaryButtonStyle: "bg-white text-black font-prompt",
                                 secondaryButtonText: "กลับ",
@@ -299,18 +316,18 @@ export default function Profile() {
                   <span className="flex items-center justify-center gap-2">
                     {value.suspended ?
                       <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <FontAwesomeIcon
-                                icon={faBan}
-                                className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>สินค้าถูกระงับ</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <FontAwesomeIcon
+                              icon={faBan}
+                              className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>สินค้าถูกระงับ</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       :
                       <>
                         <TooltipProvider>
@@ -336,7 +353,7 @@ export default function Profile() {
                                 onClick={() => {
                                   msConfirm.show({
                                     bgColor: "bg-white/4 backdrop-blur-md",
-                                    text: `คุณต้องการรีเซ็ตจริงๆใช้มั้ย (หลังจากรีเซ็ตแล้วจะไม่สามารถรีเซ็ตได้เป็นเวลา 1ชั่วโมง)`,
+                                    text: `คุณต้องการรีเซ็ตจริงๆใช้มั้ย (หลังจากรีเซ็ตแล้วจะไม่สามารถรีเซ็ตได้เป็นเวลา ${formatDuration(Number(websiteConfig.resetTokenCooldown))})`,
                                     image: "/question-sign.png",
                                     secondaryButtonStyle: "px-4 text-black font-prompt",
                                     secondaryButtonText: "กลับ",
