@@ -20,6 +20,7 @@ interface ProductInterface {
   name: string;
   price: number;
   monthlyPrice: number;
+  promotionPercent: number;
   image: string;
   video: string;
   description: string;
@@ -112,7 +113,7 @@ export default function Product() {
     if (buymodeSeleted) {
       msConfirm.show({
         bgColor: "bg-white/4 backdrop-blur-md",
-        text: `ราคาสินค้าคือ ${monthly ? productData[0]?.monthlyPrice+"/เดือน" : productData[0]?.price}฿ ต้องการชำระเงินเลยหรือไม่`,
+        text: `ราคาสินค้าคือ ${monthly ? productData[0]?.monthlyPrice+"/เดือน" : (productData[0]?.promotionPercent > 0 ? (productData[0]?.price - (productData[0]?.promotionPercent/100*productData[0]?.price)) : productData[0]?.price)}฿ ต้องการชำระเงินเลยหรือไม่`,
         image: "/question-sign.png",
         secondaryButtonStyle: "bg-white text-black font-prompt",
         secondaryButtonText: "กลับ",
@@ -217,7 +218,7 @@ export default function Product() {
 
         <div className="flex flex-col items-end justify-between ml-auto gap-2">
           <span className="font-bold text-xl text-white bg-clip-text">
-            {monthly ? productData[0]?.monthlyPrice.toLocaleString() : productData[0]?.price.toLocaleString()}฿ <span className="text-xs text-gray-400">{monthly && "/เดือน"}</span>
+            {monthly ? <span>{productData[0]?.monthlyPrice.toLocaleString()}฿</span> : (productData[0]?.promotionPercent > 0 ? <span>{productData[0]?.price - (productData[0]?.promotionPercent/100*productData[0]?.price)}฿ <span className="text-gray-500 text-sm line-through">{productData[0]?.price}฿</span></span> : <>{productData[0]?.price}฿</>)} <span className="text-xs text-gray-400">{monthly && "/เดือน"}</span>
           </span>
           <div className="flex gap-2">
             <div onClick={handleAddToCart} className="flex items-center justify-center w-fit text-white bg-white/4 hover:bg-[#cd0101]/60 border border-white/3 backdrop-blur-md overflow-hidden p-2 px-4 gap-2 rounded-md font-prompt duration-300 cursor-pointer">

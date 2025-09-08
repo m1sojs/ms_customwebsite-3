@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
         const product = await prisma.products.findMany({
             where: { name: name },
-            select: { name: true, price: true, monthlyPrice: true, id: true, version: true, repeatable: true },
+            select: { name: true, price: true, monthlyPrice: true, promotionPercent: true, id: true, version: true, repeatable: true },
         });
 
         const alreadyBought = await prisma.history.findFirst({
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         await prisma.$transaction([
             prisma.users.update({
                 where: { discordId: decoded.discordId },
-                data: { point: { decrement: monthly == true ? product[0].monthlyPrice : product[0].price } }
+                data: { point: { decrement: monthly == true ? product[0].monthlyPrice : (product[0].price - (product[0].promotionPercent / 100 * product[0].price)) } }
             }),
 
             prisma.products.update({

@@ -32,21 +32,22 @@ model users {
 }
 
 model products {
-  id           Int     @id @default(autoincrement())
-  name         String  @unique
-  label        String  @unique
-  price        Int
-  monthlyPrice Int     @default(0)
-  image        String
-  video        String
-  category     String  @default("")
-  description  String  @db.LongText
-  downloadLink String  @default("")
-  version      String  @default("0.1")
-  buyedCount   Int     @default(0)
-  stock        Int     @default(0)
-  isNew        Boolean @default(false)
-  repeatable   Boolean @default(false)
+  id               Int     @id @default(autoincrement())
+  name             String  @unique
+  label            String  @unique
+  price            Int
+  monthlyPrice     Int     @default(0)
+  promotionPercent Int     @default(0)
+  image            String
+  video            String
+  category         String  @default("")
+  description      String  @db.LongText
+  downloadLink     String  @default("")
+  version          String  @default("0.1")
+  buyedCount       Int     @default(0)
+  stock            Int     @default(0)
+  isNew            Boolean @default(false)
+  repeatable       Boolean @default(false)
 }
 
 model discountCode {
@@ -71,6 +72,7 @@ model history {
   expire       DateTime?
   ipchangecd   DateTime?
   tokenresetcd DateTime?
+  suspended    Boolean   @default(false)
   createdAt    DateTime  @default(now())
 }
 

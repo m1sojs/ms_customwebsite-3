@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
             ip: true,
             tokenKey: true,
             version: true,
+            suspended: true,
             createdAt: true,
           }
         },

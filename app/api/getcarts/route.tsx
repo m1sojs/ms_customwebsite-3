@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
         name: true,
         price: true,
         monthlyPrice: true,
+        promotionPercent: true,
         image: true
       }
     });

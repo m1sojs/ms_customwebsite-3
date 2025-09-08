@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         const productNames = [...new Set(cart.map(item => item.name))];
         const products = await prisma.products.findMany({
             where: { name: { in: productNames } },
-            select: { name: true, price: true, monthlyPrice: true, id: true, version: true, repeatable: true },
+            select: { name: true, price: true, monthlyPrice: true, promotionPercent: true, id: true, version: true, repeatable: true },
         });
 
         const histories = await prisma.history.findMany({
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
         const totalPrice = cart.reduce((sum, item) => {
             const product = products.find(p => p.name === item.name);
             if (!product) return sum;
-            return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : product.price);
+            return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : (product.price - (product.promotionPercent / 100 * product.price)));
         }, 0);
 
         if (user.point < totalPrice) {

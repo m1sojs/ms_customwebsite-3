@@ -24,6 +24,7 @@ interface Cart {
   monthly: boolean;
   price: number;
   monthlyPrice: number;
+  promotionPercent: number;
   image: string;
   label: string;
 }
@@ -34,7 +35,7 @@ export default function Cart() {
   const totalPrice = cart.reduce((sum, item) => {
     const product = cart.find(p => p.name === item.name);
     if (!product) return sum;
-    return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : product.price);
+    return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : (product.promotionPercent > 0 ? (product.price - (product.promotionPercent/100*product.price)) : product.price));
   }, 0);
 
   useEffect(() => {
@@ -154,7 +155,7 @@ export default function Cart() {
                       </div>
                       <div>
                         <p className="font-semibold">{value.label}</p>
-                        <p className="text-sm text-gray-300">{value.monthly ? value.monthlyPrice : value.price}฿ {value.monthly && "/เดือน"}</p>
+                        <p className="text-sm text-gray-300">{value.monthly ? <span>{value.monthlyPrice.toLocaleString()}฿</span> : (value.promotionPercent > 0 ? <span>{value.price - (value.promotionPercent/100*value.price)}฿ <span className="text-gray-500 text-sm line-through">{value.price}฿</span></span> : <>{value.price}฿</>)} <span className="text-xs text-gray-400">{value.monthly && "/เดือน"}</span></p>
                         <p className="text-sm text-gray-300">ประเภท : {value.monthly ? "รายเดือน" : "ถาวร"}</p>
                       </div>
                     </div>

@@ -7,7 +7,7 @@ import { Report } from 'notiflix/build/notiflix-report-aio';
 import 'aos/dist/aos.css';
 import AOS from 'aos';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faBan, faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
 import { msConfirm } from "@/components/msConfirm";
 import {
   Tooltip,
@@ -31,6 +31,7 @@ interface HistoryInterface {
   version: string;
   latestVersion: string;
   expire: string;
+  suspended: boolean;
   createdAt: string;
 }
 
@@ -206,36 +207,48 @@ export default function Profile() {
                   <span className="text-center hover:underline cursor-pointer">{value.label}</span>
 
                   <span className="text-center">
-                    {value.ip}{" "}
-                    <FontAwesomeIcon
-                      onClick={() => {
-                        msAsk.show({
-                          bgColor: "bg-white/4 backdrop-blur-md",
-                          headerText: "อัพเดท IP Server",
-                          text: `หลังจากแก้ไขแล้วจะไม่สามารถเปลี่ยนแปลงได้เป็นเวลา 1ชั่วโมง`,
-                          placeholder: "ระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4",
-                          secondaryButtonStyle: "bg-white text-black font-prompt",
-                          secondaryButtonText: "กลับ",
-                          primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
-                          primaryButtonText: "เปลี่ยนเลย"
-                        }).onNext(async (inputValue) => {
-                          Loading.pulse("Changing IP . . .");
-                          try {
-                            if (isIPv4(inputValue)) {
-                              handleChangeIP(value.id, value.name, inputValue)
-                            } else {
-                              Report.failure("ตรวจสอบผิดพลาด", "กรุณาระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4 เท่านั้น", "ย้อนกลับ");
-                            }
-                          } catch (error) {
-                            console.error("Error:", error);
-                          } finally {
-                            setTimeout(() => Loading.remove(), 1000);
-                          }
-                        })
-                      }}
-                      icon={faPen}
-                      className="text-gray-500 text-xs duration-150 cursor-pointer"
-                    />
+                    {value.suspended ? (
+                      <span className="text-red-400">สินค้าถูกระงับ</span>
+                    ) : (
+                      <>
+                        {value.ip}{" "}
+                        <FontAwesomeIcon
+                          onClick={() => {
+                            msAsk
+                              .show({
+                                bgColor: "bg-white/4 backdrop-blur-md",
+                                headerText: "อัพเดท IP Server",
+                                text: `หลังจากแก้ไขแล้วจะไม่สามารถเปลี่ยนแปลงได้เป็นเวลา 1ชั่วโมง`,
+                                placeholder: "ระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4",
+                                secondaryButtonStyle: "bg-white text-black font-prompt",
+                                secondaryButtonText: "กลับ",
+                                primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
+                                primaryButtonText: "เปลี่ยนเลย",
+                              })
+                              .onNext(async (inputValue) => {
+                                Loading.pulse("Changing IP . . .");
+                                try {
+                                  if (isIPv4(inputValue)) {
+                                    handleChangeIP(value.id, value.name, inputValue);
+                                  } else {
+                                    Report.failure(
+                                      "ตรวจสอบผิดพลาด",
+                                      "กรุณาระบุหมายเลข IP เซิร์ฟเวอร์ในรูปแบบ IPv4 เท่านั้น",
+                                      "ย้อนกลับ"
+                                    );
+                                  }
+                                } catch (error) {
+                                  console.error("Error:", error);
+                                } finally {
+                                  setTimeout(() => Loading.remove(), 1000);
+                                }
+                              });
+                          }}
+                          icon={faPen}
+                          className="text-gray-500 text-xs duration-150 cursor-pointer"
+                        />
+                      </>
+                    )}
                   </span>
 
                   <span className="text-center">
@@ -265,68 +278,90 @@ export default function Profile() {
                       </Tooltip>
                     </TooltipProvider>}
                   </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span onClick={() => handleCopy(value.tokenKey)} className="flex items-center text-xs relative group">
-                          <span className="blur-sm select-none group-hover:blur-none cursor-pointer transition duration-300">
-                            {value.tokenKey}
+                  {value.suspended ?
+                    <span className="text-center text-red-400">สินค้าถูกระงับ</span>
+                    :
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span onClick={() => handleCopy(value.tokenKey)} className="flex items-center justify-center text-xs relative group">
+                            <span className="blur-sm select-none group-hover:blur-none cursor-pointer transition duration-300">
+                              {value.tokenKey}
+                            </span>
                           </span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{copied ? "ก็อปปี้แล้ว!" : "คลิกเพื่อก็อปปี้"}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{copied ? "ก็อปปี้แล้ว!" : "คลิกเพื่อก็อปปี้"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  }
                   <span className="flex items-center justify-center gap-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <FontAwesomeIcon
-                            icon={faDownload}
-                            className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
-                            onClick={() => handleDownload(value.id, value.name, value.downloadLink)}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>คลิกเพื่อดาวโหลด</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <FontAwesomeIcon
-                            icon={faRotate}
-                            className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
-                            onClick={() => {
-                              msConfirm.show({
-                                bgColor: "bg-white/4 backdrop-blur-md",
-                                text: `คุณต้องการรีเซ็ตจริงๆใช้มั้ย (หลังจากรีเซ็ตแล้วจะไม่สามารถรีเซ็ตได้เป็นเวลา 1ชั่วโมง)`,
-                                image: "/question-sign.png",
-                                secondaryButtonStyle: "px-4 text-black font-prompt",
-                                secondaryButtonText: "กลับ",
-                                primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
-                                primaryButtonText: "รีเซ็ตเลย"
-                              }).onNext(async () => {
-                                Loading.pulse("Reseting Token . . .");
-                                try {
-                                  handleTokenReset(value.id, value.name)
-                                } catch (error) {
-                                  console.error("Error:", error);
-                                } finally {
-                                  setTimeout(() => Loading.remove(), 1000);
-                                }
-                              })
-                            }}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>คลิกเพื่อรีเซ็ตคีย์</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    {value.suspended ?
+                      <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <FontAwesomeIcon
+                                icon={faBan}
+                                className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>สินค้าถูกระงับ</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      :
+                      <>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <FontAwesomeIcon
+                                icon={faDownload}
+                                className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
+                                onClick={() => handleDownload(value.id, value.name, value.downloadLink)}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>คลิกเพื่อดาวโหลด</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <FontAwesomeIcon
+                                icon={faRotate}
+                                className="text-gray-500 hover:text-[var(--theme-color)] text-xs duration-150 cursor-pointer"
+                                onClick={() => {
+                                  msConfirm.show({
+                                    bgColor: "bg-white/4 backdrop-blur-md",
+                                    text: `คุณต้องการรีเซ็ตจริงๆใช้มั้ย (หลังจากรีเซ็ตแล้วจะไม่สามารถรีเซ็ตได้เป็นเวลา 1ชั่วโมง)`,
+                                    image: "/question-sign.png",
+                                    secondaryButtonStyle: "px-4 text-black font-prompt",
+                                    secondaryButtonText: "กลับ",
+                                    primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
+                                    primaryButtonText: "รีเซ็ตเลย"
+                                  }).onNext(async () => {
+                                    Loading.pulse("Reseting Token . . .");
+                                    try {
+                                      handleTokenReset(value.id, value.name)
+                                    } catch (error) {
+                                      console.error("Error:", error);
+                                    } finally {
+                                      setTimeout(() => Loading.remove(), 1000);
+                                    }
+                                  })
+                                }}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>คลิกเพื่อรีเซ็ตคีย์</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </>
+                    }
                   </span>
                 </div>
               ))
