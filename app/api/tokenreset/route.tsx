@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import crypto from "crypto";
+import { loadConfigFromAPI } from '@/lib/websiteConfig';
 
 function generateKey(length = 16): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  const bytes = crypto.randomBytes(length);
-  let result = "";
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    const bytes = crypto.randomBytes(length);
+    let result = "";
 
-  for (let i = 0; i < length; i++) {
-    result += chars[bytes[i] % chars.length];
-  }
+    for (let i = 0; i < length; i++) {
+        result += chars[bytes[i] % chars.length];
+    }
 
-  return "Cgxlion_"+result;
+    return "Cgxlion_" + result;
 }
 
 export async function POST(request: NextRequest) {
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+        const config = await loadConfigFromAPI();
         const decoded = jwt.verify(token, secret) as { discordId: string };
         const user = await prisma.users.findUnique({ where: { discordId: decoded.discordId } });
 
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
 
         const updatedUser = await prisma.history.updateMany({
             where: { userId: user.id, id, name },
-            data: { tokenKey: generateKey(), tokenresetcd: new Date(Date.now() + 60 * 60 * 1000) },
+            data: { tokenKey: generateKey(), tokenresetcd: new Date(Date.now() + Number(config.resetTokenCooldown) * 1000) },
         })
 
         return NextResponse.json({ message: 'แก้ไขไอพีสำเร็จ', updatedUser });

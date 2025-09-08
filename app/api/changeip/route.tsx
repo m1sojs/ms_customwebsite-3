@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { loadConfigFromAPI } from '@/lib/websiteConfig';
 
 export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+        const config = await loadConfigFromAPI();
         const decoded = jwt.verify(token, secret) as { discordId: string };
         const user = await prisma.users.findUnique({ where: { discordId: decoded.discordId } });
 
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
 
         const updatedUser = await prisma.history.updateMany({
             where: { userId: user.id, id, name },
-            data: { ip: newIP, ipchangecd: new Date(Date.now() + 60 * 60 * 1000) },
+            data: { ip: newIP, ipchangecd: new Date(Date.now() + Number(config.changeIpCooldown)) },
         })
 
         return NextResponse.json({ message: 'แก้ไขไอพีสำเร็จ', updatedUser });

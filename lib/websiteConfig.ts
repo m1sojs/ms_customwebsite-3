@@ -4,12 +4,12 @@ interface WebsiteConfig {
   websiteLogo: string;
   websiteDisc: string;
   websiteDomain: string;
-  websiteAboutProduct: string;
-  websiteAboutUs: string;
   phoneNumber: string;
   promptPayID: string;
   loginAPI: string;
   discordLink: string;
+  changeIpCooldown: string;
+  resetTokenCooldown: string;
 }
 
 const defaultConfig: WebsiteConfig = {
@@ -18,12 +18,12 @@ const defaultConfig: WebsiteConfig = {
   websiteLogo: '',
   websiteDisc: '',
   websiteDomain: '',
-  websiteAboutProduct: '',
-  websiteAboutUs: '',
   phoneNumber: '',
   promptPayID: '',
   loginAPI: '',
-  discordLink: ''
+  discordLink: '',
+  changeIpCooldown: '',
+  resetTokenCooldown: ''
 };
 
 const websiteConfig: WebsiteConfig = { ...defaultConfig };
