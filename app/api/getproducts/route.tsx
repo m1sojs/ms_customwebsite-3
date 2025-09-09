@@ -12,10 +12,14 @@ export async function POST(request: NextRequest) {
                     id: true,
                     label: true,
                     name: true,
+                    price: true,
+                    monthlyPrice: true,
                     image: true,
                     stock: true,
                     buyedCount: true,
-                    isNew: true
+                    isNew: true,
+                    hidden: true,
+                    promotionPercent: true
                 }
             });
 
@@ -34,6 +38,7 @@ export async function POST(request: NextRequest) {
                     category: true,
                     isNew: true,
                     buyedCount: true,
+                    hidden: true
                 },
                 orderBy: {
                     buyedCount: 'desc',

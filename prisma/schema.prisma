@@ -48,6 +48,7 @@ model products {
   stock            Int     @default(0)
   isNew            Boolean @default(false)
   repeatable       Boolean @default(false)
+  hidden           Boolean @default(false)
 }
 
 model discountCode {

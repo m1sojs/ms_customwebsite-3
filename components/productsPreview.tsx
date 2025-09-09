@@ -53,7 +53,6 @@ export default function ProductsPreview() {
                     </div>
 
                     <div className="flex items-center mt-auto">
-                        <span className="text-gray-200 font-prompt">{products[1]?.price.toLocaleString() || 0} Points</span>
                     </div>
                 </div>
             </div>
@@ -68,7 +67,6 @@ export default function ProductsPreview() {
                     </div>
 
                     <div className="flex items-center mt-auto">
-                        <span className="text-gray-200 font-prompt">{products[0]?.price.toLocaleString()} Points</span>
 
                         <Link href={`/store/${products[0]?.category}/${products[0]?.name}`} className="flex items-center ml-auto text-white bg-[#32323266] hover:bg-[#cd0101]/60 hover:cursor-pointer px-4 py-2 gap-2 rounded-xl duration-150">
                             <Image src="/bucket.png" width={20} height={20} alt="viewProduct" />
@@ -88,7 +86,6 @@ export default function ProductsPreview() {
                     </div>
 
                     <div className="flex items-center mt-auto">
-                        <span className="text-gray-200 font-prompt">{products[2]?.price.toLocaleString() || 0} Points</span>
                     </div>
                 </div>
             </div>
