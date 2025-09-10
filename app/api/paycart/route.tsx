@@ -29,7 +29,40 @@ function isCartItemArray(value: unknown): value is CartItem[] {
     );
 }
 
-export async function GET(request: NextRequest) {
+const discountCal = async (code: string | null | undefined, totalPrice: number, cartLength: number) => {
+    if (!code) return { finalTotal: totalPrice, perItemDiscount: 0 };
+
+    const discount = await prisma.discountCode.findUnique({
+        where: { code },
+    });
+
+    if (!discount) return { finalTotal: totalPrice, perItemDiscount: 0 };
+    if (discount.count <= 0) return { finalTotal: totalPrice, perItemDiscount: 0 };
+    if (discount.expire && discount.expire < new Date()) {
+        return { finalTotal: totalPrice, perItemDiscount: 0 };
+    }
+    if (totalPrice < discount.minDiscount) return { finalTotal: totalPrice, perItemDiscount: 0 };
+
+    let discountAmount = totalPrice * (discount.percent / 100);
+
+    if (discountAmount > discount.maxDiscount) {
+        discountAmount = discount.maxDiscount;
+    }
+
+    const perItemDiscount = discountAmount / cartLength;
+
+    const finalTotal = totalPrice - discountAmount;
+
+    await prisma.discountCode.update({
+        where: { code },
+        data: { count: { decrement: 1 } },
+    });
+
+    return { finalTotal, perItemDiscount };
+};
+
+
+export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
     const secret = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -38,6 +71,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        const { code } = await request.json();
         const decoded = jwt.verify(token, secret) as { discordId: string };
 
         const user = await prisma.users.findUnique({
@@ -74,7 +108,6 @@ export async function GET(request: NextRequest) {
             select: { name: true }
         });
 
-
         const boughtNames = new Set(histories.map(h => h.name));
 
         const duplicateItems = cart.filter(item => {
@@ -93,25 +126,51 @@ export async function GET(request: NextRequest) {
             return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : (product.price - (product.promotionPercent / 100 * product.price)));
         }, 0);
 
-        if (user.point < totalPrice) {
+        const alreadyUsed = await prisma.history.findFirst({
+            where: {
+                userId: user.id,
+                discount: code,
+            }
+        });
+
+        if (alreadyUsed) {
+            return NextResponse.json({ message: 'โค้ดส่วนลดนี้ไม่สามารถใช้งานได้ เนื่องจากได้มีการใช้งานแล้ว' }, { status: 400 });
+        }
+
+        const { finalTotal, perItemDiscount } = await discountCal(code, totalPrice, cart.length);
+
+        if (user.point < finalTotal) {
             return NextResponse.json({ message: 'Point ของท่านคงเหลือไม่เพียงพอ' }, { status: 400 });
         }
+
+        const discountedItems = cart.map(item => {
+            const product = products.find(p => p.name === item.name);
+            if (!product) return { ...item, finalPrice: 0 };
+
+            const basePrice = item.monthly ? (product.monthlyPrice ?? product.price) : (product.price - (product.promotionPercent / 100 * product.price));
+
+            return {
+                ...item,
+                finalPrice: Math.max(0, basePrice - perItemDiscount) // กันติดลบ
+            };
+        });
 
         await prisma.$transaction([
             prisma.users.update({
                 where: { discordId: decoded.discordId },
-                data: { point: { decrement: totalPrice } }
+                data: { point: { decrement: finalTotal } }
             }),
 
             prisma.history.createMany({
-                data: cart.map(item => {
+                data: discountedItems.map(item => {
                     const product = products.find(p => p.name === item.name);
                     return {
                         name: item.name,
-                        discount: null,
+                        discount: code,
+                        price: item.finalPrice,
                         userId: user.id,
                         tokenKey: generateKey(),
-                        version: product?.version ?? undefined, 
+                        version: product?.version ?? undefined,
                         expire: item.monthly
                             ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                             : null,

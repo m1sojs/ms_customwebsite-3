@@ -15,6 +15,39 @@ function generateKey(length = 16): string {
     return "Cgxlion_" + result;
 }
 
+const discountCal = async (code: string | null | undefined, price: number) => {
+    if (!code) return price;
+
+    const discount = await prisma.discountCode.findUnique({
+        where: { code },
+    });
+
+    if (!discount) return price;
+
+    if (discount.count <= 0) return price;
+
+    if (discount.expire && discount.expire < new Date()) {
+        return price;
+    }
+
+    if (price < discount.minDiscount) return price;
+
+    let discountAmount = price * (discount.percent / 100);
+
+    if (discountAmount > discount.maxDiscount) {
+        discountAmount = discount.maxDiscount;
+    }
+
+    const finalPrice = price - discountAmount;
+
+    await prisma.discountCode.update({
+        where: { code },
+        data: { count: { decrement: 1 } },
+    });
+
+    return finalPrice;
+};
+
 export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
     const secret = process.env.JWT_SECRET || 'your-secret-key';
@@ -25,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const decoded = jwt.verify(token, secret) as { discordId: string };
-        const { name, monthly } = await request.json();
+        const { name, monthly, code } = await request.json();
 
         const user = await prisma.users.findUnique({
             where: { discordId: decoded.discordId },
@@ -56,14 +89,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'คุณได้ซื้อสินค้านี้ไปแล้ว ไม่สามารถซื้อซ้ำได้' }, { status: 400 });
         }
 
-        if (user.point < product[0].price) {
+        const alreadyUsed = await prisma.history.findFirst({
+            where: {
+                userId: user.id,
+                discount: code,
+            }
+        });
+
+        const totalPrice = alreadyUsed ? (product[0].price - (product[0].promotionPercent / 100 * product[0].price)) : await discountCal(code, (product[0].price - (product[0].promotionPercent / 100 * product[0].price)));
+
+        if (user.point < await totalPrice) {
             return NextResponse.json({ message: 'Point ของท่านคงเหลือไม่เพียงพอ' }, { status: 400 });
         }
 
         await prisma.$transaction([
             prisma.users.update({
                 where: { discordId: decoded.discordId },
-                data: { point: { decrement: monthly == true ? product[0].monthlyPrice : (product[0].price - (product[0].promotionPercent / 100 * product[0].price)) } }
+                data: { point: { decrement: monthly == true ? product[0].monthlyPrice : totalPrice } }
             }),
 
             prisma.products.update({
@@ -74,7 +116,8 @@ export async function POST(request: NextRequest) {
             prisma.history.createMany({
                 data: {
                     name: product[0].name,
-                    discount: null,
+                    discount: alreadyUsed ? null : code,
+                    price: totalPrice,
                     userId: user.id,
                     tokenKey: generateKey(),
                     version: product[0].version,

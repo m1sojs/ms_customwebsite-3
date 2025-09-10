@@ -32,10 +32,11 @@ interface Cart {
 export default function Cart() {
   const [step, setStep] = useState(1);
   const [cart, setCart] = useState<Cart[]>([]);
+  const [discountCode, setDiscountCode] = useState("")
   const totalPrice = cart.reduce((sum, item) => {
     const product = cart.find(p => p.name === item.name);
     if (!product) return sum;
-    return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : (product.promotionPercent > 0 ? (product.price - (product.promotionPercent/100*product.price)) : product.price));
+    return sum + (item.monthly ? (product.monthlyPrice ?? product.price) : (product.promotionPercent > 0 ? (product.price - (product.promotionPercent / 100 * product.price)) : product.price));
   }, 0);
 
   useEffect(() => {
@@ -86,7 +87,15 @@ export default function Cart() {
     }).onNext(async () => {
       Loading.pulse("Checking Out . . .");
       try {
-        const result = await fetch('/api/paycart');
+        const result = await fetch('/api/paycart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            code: discountCode
+          })
+        });
         const data = await result.json();
         if (!result.ok) return Report.failure("เกิดข้อผิดพลาด", data.message, "ตกลง");
         window.dispatchEvent(new Event("login-success"));
@@ -155,27 +164,44 @@ export default function Cart() {
                       </div>
                       <div>
                         <p className="font-semibold">{value.label}</p>
-                        <p className="text-sm text-gray-300">{value.monthly ? <span>{value.monthlyPrice.toLocaleString()}฿</span> : (value.promotionPercent > 0 ? <span>{value.price - (value.promotionPercent/100*value.price)}฿ <span className="text-gray-500 text-sm line-through">{value.price}฿</span></span> : <>{value.price}฿</>)} <span className="text-xs text-gray-400">{value.monthly && "/เดือน"}</span></p>
+                        <p className="text-sm text-gray-300">{value.monthly ? <span>{value.monthlyPrice.toLocaleString()}฿</span> : (value.promotionPercent > 0 ? <span>{value.price - (value.promotionPercent / 100 * value.price)}฿ <span className="text-gray-500 text-sm line-through">{value.price}฿</span></span> : <>{value.price}฿</>)} <span className="text-xs text-gray-400">{value.monthly && "/เดือน"}</span></p>
                         <p className="text-sm text-gray-300">ประเภท : {value.monthly ? "รายเดือน" : "ถาวร"}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => handleRemove(value.name)}
-                      className="p-2 rounded-lg text-red-400 hover:bg-red-400/20"
+                      className="w-10 h-10 rounded-full text-red-400 hover:bg-red-400/20 cursor-pointer"
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </button>
                   </div>
                 ))
               )}
-              <div className="text-xl font-bold ml-auto mt-4">{cart.length === 0 ? "" : `ราคารวม : ${totalPrice.toLocaleString()}฿`}</div>
+
               {cart.length > 0 && (
-                <button
-                  onClick={() => handlePay()}
-                  className="mt-2 flex items-center justify-center gap-2 bg-[var(--theme-color)] hover:bg-[var(--theme-color)]/70 text-white font-semibold py-2 px-4 rounded-xl duration-300"
-                >
-                  ชำระเงิน <FontAwesomeIcon icon={faArrowRight} />
-                </button>
+                <>
+                  <div className="flex items-center justify-between mt-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">โค้ดส่วนลด</label>
+                      <input
+                        type="text"
+                        placeholder="ใส่โค้ดส่วนลด"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        className="w-full p-2 px-4 outline-none bg-white/4 rounded-xl border border-white/10 focus:border-[var(--theme-color)] duration-300"
+                      />
+                    </div>
+
+                    <div className="text-xl font-bold">{`ราคารวม : ${totalPrice.toLocaleString()}฿`}</div>
+                  </div>
+
+                  <button
+                    onClick={() => handlePay()}
+                    className="mt-2 flex items-center justify-center gap-2 bg-[var(--theme-color)] hover:bg-[var(--theme-color)]/70 text-white font-semibold py-2 px-4 rounded-xl duration-300"
+                  >
+                    ชำระเงิน <FontAwesomeIcon icon={faArrowRight} />
+                  </button>
+                </>
               )}
             </motion.div>
           )}

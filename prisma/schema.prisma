@@ -67,6 +67,7 @@ model history {
   ip           String    @default("127.0.0.1")
   tokenKey     String    @default("")
   discount     String?
+  price        Int       @default(0)
   user         users     @relation(fields: [userId], references: [id])
   userId       Int
   version      String    @default("0.1")

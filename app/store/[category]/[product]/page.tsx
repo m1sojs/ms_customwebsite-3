@@ -11,8 +11,8 @@ import rehypeRaw from "rehype-raw";
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { useParams } from "next/navigation";
-import { msConfirm } from "@/components/msConfirm";
 import websiteConfig from "@/lib/websiteConfig";
+import { msAsk } from "@/components/msAsk";
 
 interface ProductInterface {
   id: number;
@@ -111,15 +111,16 @@ export default function Product() {
 
   const handlePaynow = async () => {
     if (buymodeSeleted) {
-      msConfirm.show({
+      msAsk.show({
         bgColor: "bg-white/4 backdrop-blur-md",
         text: `ราคาสินค้าคือ ${monthly ? productData[0]?.monthlyPrice + "/เดือน" : (productData[0]?.promotionPercent > 0 ? (productData[0]?.price - (productData[0]?.promotionPercent / 100 * productData[0]?.price)) : productData[0]?.price)}฿ ต้องการชำระเงินเลยหรือไม่`,
-        image: "/question-sign.png",
+        image: "/dollar-symbol.png",
+        placeholder: "โค้ดส่วนลด",
         secondaryButtonStyle: "bg-white text-black font-prompt",
         secondaryButtonText: "กลับ",
         primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
         primaryButtonText: "ชำระเงิน"
-      }).onNext(async () => {
+      }).onNext(async (inputValue) => {
         Loading.pulse("Checking Out . . .");
         try {
           const res = await fetch('/api/paynow', {
@@ -129,7 +130,8 @@ export default function Product() {
             },
             body: JSON.stringify({
               name: productData[0]?.name,
-              monthly: monthly
+              monthly: monthly,
+              code: inputValue
             })
           });
 

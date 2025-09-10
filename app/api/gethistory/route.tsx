@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             discount: true,
+            price: true,
             expire: true,
             ip: true,
             tokenKey: true,
@@ -52,22 +53,25 @@ export async function GET(request: NextRequest) {
         name: true,
         label: true,
         price: true,
+        promotionPercent: true,
         version: true,
         downloadLink: true
       }
     });
 
-    const enrichedHistory = user.history.map(item => {
-      const product = products.find(p => p.name === item.name);
+    const enrichedHistory = await Promise.all(
+      user.history.map(async (item) => {
+        const product = products.find(p => p.name === item.name);
+        if (!product) return item;
 
-      return {
-        ...item,
-        label: product?.label ?? null,
-        price: product?.price ?? null,
-        downloadLink: product?.downloadLink ?? null,
-        latestVersion: product?.version ?? null,
-      };
-    });
+        return {
+          ...item,
+          label: product.label ?? null,
+          downloadLink: product.downloadLink ?? null,
+          latestVersion: product.version ?? null,
+        };
+      })
+    );
 
     return NextResponse.json(
       {
