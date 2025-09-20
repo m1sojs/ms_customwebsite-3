@@ -11,6 +11,7 @@ import websiteConfig from "@/lib/websiteConfig";
 export default function Topup() {
   const [page, setPage] = useState("promptpay");
   const [qrImage, setQrImage] = useState<string | null>(null);
+  const [refno, setRefNo] = useState<string | null>(null)
   const [isGenerated, setIsGenerated] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [voucher, setVoucher] = useState("");
@@ -93,7 +94,7 @@ export default function Topup() {
 
       setIsGenerated(true);
 
-      const res = await fetch("/api/generateQr", {
+      const res = await fetch(`${websiteConfig.serverApiDomain}/payment/genPaymentQR`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,6 +109,7 @@ export default function Topup() {
       setTimeout(() => {
         setQrImage(data.image);
         setCountdown(600);
+        setRefNo(data.refno)
         amountInput.value = data.newAmount;
         amountInput.disabled = true;
       }, 1000);
@@ -131,8 +133,27 @@ export default function Topup() {
     });
 
     const data = await res.json();
-    if (!res.ok) Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
+    if (!res.ok) return Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
 
+    Report.success("เสร็จสิ้น", `เติมเงินยอด ${data.amount}  พ้อย เรียบร้อยแล้ว!!`, "ย้อนกลับ");
+  }
+
+  const handleConfirmScanned = async () => {
+    const res = await fetch(`api/checkpaymentstatus`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refno: refno,
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.status) return Report.failure("ตรวจสอบผิดพลาด", "ไม่พบหมายเลขอ้างอิงหรือคุณยังไม่ได้ทำการชะระเงิน", "ย้อนกลับ");
+
+    cancelQr()
+    window.dispatchEvent(new Event("login-success"));
     Report.success("เสร็จสิ้น", `เติมเงินยอด ${data.amount}  พ้อย เรียบร้อยแล้ว!!`, "ย้อนกลับ");
   }
 
@@ -165,7 +186,10 @@ export default function Topup() {
               )}
               <input type="number" name="amount" id="amount" placeholder="กรอกจำนวนเงิน" className="bg-white/1 border border-white/4 hover:bg-[#cd0101]/60 outline-none text-sm font-prompt duration-150 w-full p-2 px-5 mt-1 rounded-xl" />
               {isGenerated ? (
-                <div className="bg-[#cd010166] hover:bg-[#cd010190] hover:cursor-pointer text-sm text-center duration-150 w-full p-2 rounded-xl font-prompt" onClick={cancelQr}>ยกเลิก</div>
+                <div className="flex flex-col w-full gap-2">
+                  <div className="bg-green-400/60 hover:bg-green-500/60 hover:cursor-pointer text-sm text-center duration-150 w-full p-2 rounded-xl font-prompt" onClick={handleConfirmScanned}>ยืนยันการชำระเงิน</div>
+                  <div className="bg-[#cd010166] hover:bg-[#cd010190] hover:cursor-pointer text-sm text-center duration-150 w-full p-2 rounded-xl font-prompt" onClick={cancelQr}>ยกเลิก</div>
+                </div>
               ) : (
                 <div className="bg-white/4 hover:bg-[#cd0101]/60 hover:cursor-pointer text-sm text-center duration-150 w-full p-2 rounded-xl font-prompt" onClick={generateQr}>สร้าง QRCode</div>
               )}

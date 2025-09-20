@@ -4,6 +4,7 @@ interface WebsiteConfig {
   websiteLogo: string;
   websiteDisc: string;
   websiteDomain: string;
+  serverApiDomain: string;
   phoneNumber: string;
   promptPayID: string;
   loginAPI: string;
@@ -18,6 +19,7 @@ const defaultConfig: WebsiteConfig = {
   websiteLogo: '',
   websiteDisc: '',
   websiteDomain: '',
+  serverApiDomain: '',
   phoneNumber: '',
   promptPayID: '',
   loginAPI: '',
