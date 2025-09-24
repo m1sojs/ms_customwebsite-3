@@ -110,7 +110,9 @@ export default function Category() {
               <div className="flex">
                 <div className="flex flex-col w-fit text-gray-400 text-xs bg-white/4 border border-white/3 backdrop-blur-md overflow-hidden mt-auto p-2 gap-1 rounded-xl font-prompt duration-300">
                   <span>ยอดการซื้อทั้งหมด: {value.buyedCount}</span>
-                  <span>สต็อค: {value.stock}</span>
+                  {
+                    value.stock === -1 ? <span></span> : <span>สต็อค: {value.stock}</span>
+                  }
                 </div>
                 <div className="flex items-center justify-center w-fit text-white bg-white/4 hover:bg-[#cd0101]/60 border border-white/3 backdrop-blur-md overflow-hidden mt-auto ml-auto p-2 gap-2 rounded-xl font-prompt duration-300">
                   สั่งซื้อสินค้า

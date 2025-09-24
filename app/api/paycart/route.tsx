@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import crypto from "crypto";
+import { Prisma } from '@prisma/client';
 
 type CartItem = {
     name: string;
@@ -50,7 +51,6 @@ const discountCal = async (code: string | null | undefined, totalPrice: number, 
     }
 
     const perItemDiscount = discountAmount / cartLength;
-
     const finalTotal = totalPrice - discountAmount;
 
     await prisma.discountCode.update({
@@ -60,7 +60,6 @@ const discountCal = async (code: string | null | undefined, totalPrice: number, 
 
     return { finalTotal, perItemDiscount };
 };
-
 
 export async function POST(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
@@ -93,8 +92,22 @@ export async function POST(request: NextRequest) {
         const productNames = [...new Set(cart.map(item => item.name))];
         const products = await prisma.products.findMany({
             where: { name: { in: productNames } },
-            select: { name: true, price: true, monthlyPrice: true, promotionPercent: true, id: true, version: true, repeatable: true },
+            select: {
+                name: true,
+                price: true,
+                monthlyPrice: true,
+                promotionPercent: true,
+                id: true,
+                version: true,
+                repeatable: true,
+                stock: true,
+            },
         });
+
+        const outOfStock = products.filter(p => p.stock === 0).map(p => p.name);
+        if (outOfStock.length > 0) {
+            return NextResponse.json({ message: `สินค้าหมดสต็อก: ${outOfStock.join(', ')}` }, { status: 400 });
+        }
 
         const histories = await prisma.history.findMany({
             where: {
@@ -151,14 +164,14 @@ export async function POST(request: NextRequest) {
 
             return {
                 ...item,
-                finalPrice: Math.max(0, basePrice - perItemDiscount) // กันติดลบ
+                finalPrice: Math.max(0, basePrice - perItemDiscount)
             };
         });
 
-        await prisma.$transaction([
+        const tx: Prisma.PrismaPromise<unknown>[] = [
             prisma.users.update({
                 where: { discordId: decoded.discordId },
-                data: { point: { decrement: finalTotal } }
+                data: { point: { decrement: finalTotal }, cart: [] }
             }),
 
             prisma.history.createMany({
@@ -177,12 +190,28 @@ export async function POST(request: NextRequest) {
                     };
                 })
             }),
+        ];
 
-            prisma.users.update({
-                where: { discordId: decoded.discordId },
-                data: { cart: [] }
-            })
-        ]);
+        for (const product of products) {
+            if (product.stock === -1) {
+                tx.push(
+                    prisma.products.update({
+                        where: { name: product.name },
+                        data: { buyedCount: { increment: 1 } }
+                    })
+                );
+            } else {
+                const qty = cart.filter(item => item.name === product.name).length;
+                tx.push(
+                    prisma.products.update({
+                        where: { name: product.name },
+                        data: { stock: { decrement: qty }, buyedCount: { increment: qty } }
+                    })
+                );
+            }
+        }
+
+        await prisma.$transaction(tx);
 
         return NextResponse.json({ message: 'ซื้อสินค้าสำเร็จ' });
     } catch (error: unknown) {

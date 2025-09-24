@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import crypto from "crypto";
+import { Prisma } from '@prisma/client';
 
 function generateKey(length = 16): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -69,10 +70,27 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'ไม่พบผู้ใช้' }, { status: 404 });
         }
 
-        const product = await prisma.products.findMany({
-            where: { name: name },
-            select: { name: true, price: true, monthlyPrice: true, promotionPercent: true, id: true, version: true, repeatable: true },
+        const product = await prisma.products.findFirst({
+            where: { name },
+            select: {
+                name: true,
+                price: true,
+                monthlyPrice: true,
+                promotionPercent: true,
+                id: true,
+                version: true,
+                repeatable: true,
+                stock: true,
+            },
         });
+
+        if (!product) {
+            return NextResponse.json({ message: 'ไม่พบสินค้า' }, { status: 404 });
+        }
+
+        if (product.stock === 0) {
+            return NextResponse.json({ message: 'สินค้าหมดสต็อก' }, { status: 400 });
+        }
 
         const alreadyBought = await prisma.history.findFirst({
             where: {
@@ -85,7 +103,7 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        if (alreadyBought && !product[0].repeatable) {
+        if (alreadyBought && !product.repeatable) {
             return NextResponse.json({ message: 'คุณได้ซื้อสินค้านี้ไปแล้ว ไม่สามารถซื้อซ้ำได้' }, { status: 400 });
         }
 
@@ -96,37 +114,50 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        const totalPrice = alreadyUsed ? (product[0].price - (product[0].promotionPercent / 100 * product[0].price)) : await discountCal(code, (product[0].price - (product[0].promotionPercent / 100 * product[0].price)));
+        const totalPrice = alreadyUsed ? (product.price - (product.promotionPercent / 100 * product.price)) : await discountCal(code, (product.price - (product.promotionPercent / 100 * product.price)));
 
         if (user.point < await totalPrice) {
             return NextResponse.json({ message: 'Point ของท่านคงเหลือไม่เพียงพอ' }, { status: 400 });
         }
 
-        await prisma.$transaction([
+        const tx: Prisma.PrismaPromise<unknown>[] = [
             prisma.users.update({
                 where: { discordId: decoded.discordId },
-                data: { point: { decrement: monthly == true ? product[0].monthlyPrice : totalPrice } }
+                data: { point: { decrement: monthly === true ? product.monthlyPrice : totalPrice } }
             }),
 
-            prisma.products.update({
-                where: { name: product[0].name },
-                data: { stock: { decrement: 1 }, buyedCount: { increment: 1 } }
-            }),
-
-            prisma.history.createMany({
+            prisma.history.create({
                 data: {
-                    name: product[0].name,
+                    name: product.name,
                     discount: alreadyUsed ? null : code,
                     price: totalPrice,
                     userId: user.id,
                     tokenKey: generateKey(),
-                    version: product[0].version,
-                    expire: monthly == true
+                    version: product.version,
+                    expire: monthly === true
                         ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                         : null,
                 }
             }),
-        ]);
+        ];
+
+        if (product.stock !== -1) {
+            tx.push(
+                prisma.products.update({
+                    where: { name: product.name },
+                    data: { stock: { decrement: 1 }, buyedCount: { increment: 1 } }
+                })
+            );
+        } else {
+            tx.push(
+                prisma.products.update({
+                    where: { name: product.name },
+                    data: { buyedCount: { increment: 1 } }
+                })
+            );
+        }
+
+        await prisma.$transaction(tx);
 
         return NextResponse.json({ message: 'ซื้อสินค้าสำเร็จ' });
     } catch (error: unknown) {

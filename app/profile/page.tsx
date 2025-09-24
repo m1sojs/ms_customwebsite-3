@@ -7,7 +7,7 @@ import { Report } from 'notiflix/build/notiflix-report-aio';
 import 'aos/dist/aos.css';
 import AOS from 'aos';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faBan, faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faBan, faCoins, faDownload, faKey, faPen, faRotate } from "@fortawesome/free-solid-svg-icons";
 import { msConfirm } from "@/components/msConfirm";
 import {
   Tooltip,
@@ -269,15 +269,75 @@ export default function Profile() {
                   </span>
 
                   <span className="text-center">
-                    {value.expire
-                      ? `${Math.max(
-                        0,
-                        Math.ceil(
-                          (new Date(value.expire).getTime() - new Date().getTime()) /
-                          (1000 * 60 * 60 * 24)
-                        )
-                      )} วัน`
-                      : "-"}
+                    {value.expire ? (
+                      (() => {
+                        const daysLeft = Math.max(
+                          0,
+                          Math.ceil(
+                            (new Date(value.expire).getTime() - new Date().getTime()) /
+                            (1000 * 60 * 60 * 24)
+                          )
+                        );
+
+                        return (
+                          <>
+                            {daysLeft < 7 ? <span className="text-red-400">{daysLeft}</span> : daysLeft} วัน
+                            {daysLeft < 7 && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <FontAwesomeIcon
+                                      icon={faArrowUp}
+                                      onClick={() => {
+                                        msConfirm.show({
+                                          bgColor: "bg-white/4 backdrop-blur-md",
+                                          text: `คุณต้องการซื้อเดือนเพิ่มใช่หรือไม่ (ราคาจะถูกหักจากพ้อยของคุณ)`,
+                                          secondaryButtonStyle: "bg-white text-black font-prompt",
+                                          secondaryButtonText: "กลับ",
+                                          primaryButtonStyle: "bg-[var(--theme-color)] text-white font-prompt",
+                                          primaryButtonText: "ซื้อเลย",
+                                        }).onNext(async () => {
+                                          Loading.pulse("Processing . . .");
+                                          try {
+                                            const res = await fetch('/api/buymonth', {
+                                              method: 'POST',
+                                              headers: {
+                                                'Content-Type': 'application/json'
+                                              },
+                                              body: JSON.stringify({
+                                                id: value.id,
+                                                name: value.name,
+                                              })
+                                            });
+
+                                            const data = await res.json();
+
+                                            if (!res.ok) return Report.failure("ตรวจสอบผิดพลาด", data.message || "เกิดข้อผิดพลาด", "ย้อนกลับ");
+
+                                            updataHistory();
+                                            Report.success("เสร็จสิ้น", `ซื้อเดือนเพิ่มเรียบร้อยแล้ว`, "ย้อนกลับ");
+                                          } catch (error) {
+                                            console.error("Error:", error);
+                                          } finally {
+                                            setTimeout(() => Loading.remove(), 1000);
+                                          }
+                                        });
+                                      }}
+                                      className="text-green-400 hover:text-green-600 ml-2 text-xs duration-150 cursor-pointer"
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>ซื้อเดือนเพิ่ม</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </>
+                        );
+                      })()
+                    ) : (
+                      "-"
+                    )}
                   </span>
                   <span className="text-center">
                     {value.version}{" "}
